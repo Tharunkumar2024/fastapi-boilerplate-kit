@@ -1,0 +1,9 @@
+[MASTER]
+# Ignore everything except *.py files
+ignore-patterns=.*[^.py]$
+
+# Optional: Ignore specific directories or patterns
+ignore=tests,build
+
+# You can also configure the max number of errors
+max-line-length=100
