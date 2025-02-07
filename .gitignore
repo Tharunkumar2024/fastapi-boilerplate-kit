@@ -1,0 +1,56 @@
+# Bytecode files
+*.pyc
+*.pyo
+__pycache__
+
+# Distribution/packaging directories
+dist/
+build/
+*.egg-info/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Environments (virtualenv, etc.)
+env/
+venv/
+ENV/
+VENV/
+
+# Pytest cache
+.cache/
+
+# mypy
+.mypy_cache/
+
+# VSCode settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# MacOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+
+# Log files
+*.log
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Sphinx documentation
+docs/_build/
+
+# Pytest cache
+.pytest_cache/
+
+# Pytest coverage files
+.coverage
+
+# Package distribution files
+*.tar.gz
+*.whl
