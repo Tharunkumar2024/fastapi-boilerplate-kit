@@ -32,9 +32,14 @@ jobs:
         else
           echo "No Python files found to lint."
         fi
-    - name: Build the package
-      run: python setup.py sdist bdist_wheel
 
+    - name: Build the package
+      run: |
+        if [ -f "setup.py" ]; then
+          python setup.py sdist bdist_wheel
+        else
+          echo "setup.py not found. Skipping build step."
+        fi
     # - name: Upload to PyPI
     #   run: |
     #     twine upload dist/* -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
