@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='fastapi_boilerplate_kit',
-    version='1.x.x',
+    version='1.5.8',
     packages=find_packages(),
     python_requires='>=3.10',
     package_data={
