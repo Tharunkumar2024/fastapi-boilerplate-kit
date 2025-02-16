@@ -4,6 +4,9 @@ The file have setup code for the boilerplate
 
 from setuptools import setup, find_packages
 
+with open('README.md', encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='fastapi_boilerplate_kit',
     version='1.5.8',
@@ -25,7 +28,7 @@ setup(
     author='Tharunkumar Saravanan',
     author_email='tharunkumar.developers@gmail.com',
     description='A boilerplate for FastAPI projects',
-    long_description=open('README.md', encoding='utf-8').read(),
+    long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/Tharunkumar2024/fastapi-boilerplate-kit',
     classifiers=[
