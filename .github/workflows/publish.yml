@@ -41,6 +41,6 @@ jobs:
         else
           echo "setup.py not found. Skipping build step."
         fi
-    # - name: Upload to PyPI
-    #   run: |
-    #     twine upload dist/* -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
+    - name: Upload to PyPI
+      run: |
+        twine upload dist/* -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }}
