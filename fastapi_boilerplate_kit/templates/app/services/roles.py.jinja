@@ -1,0 +1,97 @@
+"""
+This module provides roles service.
+"""
+
+# pylint: disable=E1136,E1131
+
+from fastapi import status
+from fastapi.exceptions import HTTPException
+from sqlalchemy.orm import Session
+from app.repositories import (
+    RolesRepository,
+)
+from app.schemas import (
+    RoleCreateRequest, RoleUpdateRequest, RoleResponse
+)
+from app.schemas.commons import (
+    create_role_response,
+    get_all_role_response,
+    get_role_response,
+    update_role_response,
+    delete_role_response
+)
+
+
+class RolesService:
+    def __init__(self, db: Session):
+        self.db = db
+        self.role_repo = RolesRepository(db)
+
+    async def create_role(
+        self,
+        role: RoleCreateRequest
+    ) -> RoleResponse:
+        try:
+            role_data = role.model_dump()
+            response = self.role_repo.create_role(role_data)
+            return create_role_response(response)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def get_all_roles(
+        self
+    ) -> list[RoleResponse]:
+        try:
+            response = self.role_repo.get_all_roles()
+            return get_all_role_response(response)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def get_role_by_id(
+        self,
+        role_id: int
+    ) -> RoleResponse:
+        try:
+            response = self.role_repo.get_role(role_id)
+            return get_role_response(response)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def update_role_by_id(
+        self,
+        role_id: int,
+        role: RoleUpdateRequest,
+    ) -> RoleResponse:
+        try:
+            role_data = {
+                k: v
+                for k, v in role.model_dump(exclude_unset=True).items()
+                if v is not None and v != ""
+            }
+            response = self.role_repo.update_role(
+                role_id,
+                role_data
+            )
+            return update_role_response(response)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def delete_role_by_id(
+        self,
+        role_id: int
+    ) -> RoleResponse:
+        try:
+            response = self.role_repo.delete_role(role_id)
+            return delete_role_response(response)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )

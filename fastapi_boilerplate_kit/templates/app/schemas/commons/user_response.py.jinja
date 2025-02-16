@@ -1,0 +1,65 @@
+"""
+This module provides user response schemas.
+"""
+
+# pylint: disable=unsupported-binary-operation
+# pylint: disable=E1136,E1131
+
+from fastapi.responses import JSONResponse
+from app.schemas import (
+    UserResponse,
+    UserStatusUpdateResponse,
+)
+from app.schemas.commons.base_response import CommonResponse
+
+
+def create_user_response(
+    data: UserResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[UserResponse].create(data, meta)
+
+
+def get_user_response(
+    data: UserResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[UserResponse].fetch(data, meta)
+
+
+def get_all_user_response(
+    data: list[UserResponse],
+    meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[list[UserResponse]].fetch(data, meta)
+
+
+def update_user_response(
+    data: UserResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[UserResponse].update(data, meta)
+
+
+def update_user_status_response(
+    data: UserStatusUpdateResponse, meta: dict | None = None
+) -> CommonResponse[UserStatusUpdateResponse]:
+    return CommonResponse[UserStatusUpdateResponse].update(data, meta)
+
+
+def delete_user_response(
+    data: UserResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[UserResponse].delete(data, meta)
+
+
+def user_not_found(
+    meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse.not_found(
+        'User not found',
+        meta
+    )
+
+
+def user_error_response(
+    message: str, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[UserResponse].error(message, meta)

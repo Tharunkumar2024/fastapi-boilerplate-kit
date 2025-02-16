@@ -1,0 +1,163 @@
+"""
+This module provides user controller.
+"""
+
+# pylint: disable=E1136,E1131
+# pylint: disable=invalid-name
+
+from fastapi import APIRouter, Depends, status, Query
+from fastapi.exceptions import HTTPException
+from sqlalchemy.orm import Session
+from pydantic import EmailStr
+from app.services import UsersService
+from app.schemas import (
+    UserCreateDefaultRequest,
+    UserUpdateDefaultRequest,
+    UserStatusUpdateRequest,
+    UserResponse,
+    UserStatusUpdateResponse
+)
+from app.database.database import get_db
+from app.schemas.commons import CommonResponse
+
+router = APIRouter(prefix="/users")
+
+API_TAG = 'Users'
+RESPONSE_MODEL = UserResponse
+
+
+def get_user_service(
+    db: Session = Depends(get_db)
+) -> UsersService:
+    return UsersService(db)
+
+
+@router.post('', tags=[API_TAG], response_model=CommonResponse[RESPONSE_MODEL])
+async def create_user(
+    user: UserCreateDefaultRequest = Depends(
+        UserCreateDefaultRequest.as_form
+    ),
+    user_service: UsersService = Depends(
+        get_user_service
+    )
+) -> CommonResponse[UserResponse]:
+    try:
+        response = await user_service.create_user(
+            user
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.get(
+    '',
+    tags=[API_TAG],
+    response_model=CommonResponse[
+        list[RESPONSE_MODEL]
+    ]
+)
+async def get_all_users(
+    user_service: UsersService = Depends(
+        get_user_service
+    )
+) -> CommonResponse[list[UserResponse]]:
+    try:
+        response = await user_service.get_all_users()
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.get(
+    '/{_id}',
+    tags=[API_TAG],
+    response_model=CommonResponse[RESPONSE_MODEL]
+)
+async def get_user_by_id(
+    _id: int,
+    user_service: UsersService = Depends(
+        get_user_service
+    )
+) -> CommonResponse[UserResponse]:
+    try:
+        response = await user_service.get_user_by_id(_id)
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.patch(
+    '/{_id}',
+    tags=[API_TAG],
+    response_model=CommonResponse[RESPONSE_MODEL]
+)
+async def update_user_by_id(
+    _id: int,
+    user: UserUpdateDefaultRequest = Depends(
+        UserUpdateDefaultRequest.as_form
+    ),
+    user_service: UsersService = Depends(
+        get_user_service
+    )
+) -> CommonResponse[UserResponse]:
+    try:
+        response = await user_service.update_user_by_id(
+            _id,
+            user
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.patch(
+    '/status/{_id}',
+    tags=[API_TAG],
+    response_model=CommonResponse[UserStatusUpdateResponse]
+)
+async def update_user_status(
+    _id: int,
+    user_status_update: UserStatusUpdateRequest,
+    user_service: UsersService = Depends(
+        get_user_service
+    )
+) -> CommonResponse[UserStatusUpdateResponse]:
+    try:
+        response = await user_service.update_user_status(
+            _id,
+            user_status_update
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.delete(
+        '/{_id}',
+        tags=[API_TAG],
+        response_model=CommonResponse[RESPONSE_MODEL]
+    )
+async def delete_user_by_id(
+    _id: int,
+    user_service: UsersService = Depends(
+        get_user_service
+    )
+) -> CommonResponse[UserResponse]:
+    try:
+        response = await user_service.delete_user_by_id(_id)
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )

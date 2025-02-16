@@ -1,0 +1,38 @@
+"""
+This module provides base abstract model.
+"""
+
+from datetime import datetime, timezone
+from sqlalchemy import Column, DateTime, Integer, ForeignKey
+from sqlalchemy.orm import relationship, declared_attr
+from sqlalchemy.sql import expression
+from app.database.database import Base
+
+
+class BaseModel(Base):
+    __abstract__ = True
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=True,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+    created_by = Column(Integer, ForeignKey('users.id', ondelete="SET NULL"), nullable=True, server_default=expression.null())
+    updated_by = Column(Integer, ForeignKey('users.id', ondelete="SET NULL"), nullable=True, server_default=expression.null())
+
+    @declared_attr
+    @classmethod
+    def created_by_user(cls):
+        return relationship("User", foreign_keys=[cls.created_by], lazy="selectin", overlaps="invited_users,invitor")
+
+    @declared_attr
+    @classmethod
+    def updated_by_user(cls):
+        return relationship("User", foreign_keys=[cls.updated_by], lazy="selectin")

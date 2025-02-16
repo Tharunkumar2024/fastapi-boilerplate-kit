@@ -1,0 +1,150 @@
+"""
+This module provides users service.
+"""
+
+# pylint: disable=E1136,E1131
+
+from fastapi import status
+from fastapi.exceptions import HTTPException
+from sqlalchemy.orm import Session
+from app.repositories import UsersRepository, RolesRepository
+from app.schemas import (
+    UserCreateRequest,
+    UserUpdateRequest,
+    UserStatusUpdateRequest,
+    UserResponse,
+    UserStatusUpdateResponse,
+)
+from app.schemas.commons import (
+    CommonResponse,
+    create_user_response,
+    get_all_user_response,
+    get_user_response,
+    update_user_response,
+    update_user_status_response,
+    delete_user_response,
+    user_not_found,
+)
+
+
+class UsersService:
+    def __init__(self, db: Session):
+        self.db = db
+        self.user_repo = UsersRepository(db)
+        self.role_repo = RolesRepository(db)
+
+    async def create_user(
+        self,
+        user: UserCreateRequest,
+    ) -> CommonResponse[UserResponse]:
+        try:
+            user_data = user.model_dump()
+            user = self.user_repo.create_user(user_data)
+            return create_user_response(user)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def get_all_users(
+        self
+    ) -> CommonResponse[list[UserResponse]]:
+        try:
+            users = self.user_repo.get_all_users()
+            if not users:
+                return user_not_found()
+            return get_all_user_response(users)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def get_user_entity(
+        self,
+        user_id: int
+    ) -> UserResponse:
+        try:
+            user = self.user_repo.get_user(user_id)
+            if not user:
+                return user_not_found()
+            return user
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def get_user_by_id(
+        self,
+        user_id: int
+    ) -> CommonResponse[UserResponse]:
+        try:
+            user = await self.get_user_entity(user_id)
+            if not user:
+                return user_not_found()
+            return get_user_response(user)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def update_user_by_id(
+        self,
+        user_id: int,
+        user: UserUpdateRequest,
+    ) -> CommonResponse[UserResponse]:
+        try:
+            user_data = {
+                k: v
+                for k, v in user.model_dump(exclude_unset=True).items()
+                if v is not None and v != ""
+            }
+            existing_user_data = await self.get_user_entity(user_id)
+            user_data.update(
+                {
+                    "username": f"{user.firstname} {user.lastname}",
+                }
+            )
+            user = self.user_repo.update_user(user_id, user_data)
+            if not user:
+                return user_not_found()
+            return update_user_response(user)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def update_user_status(
+        self,
+        user_id: int,
+        user_status_update: UserStatusUpdateRequest
+    ) -> CommonResponse[UserStatusUpdateResponse]:
+        try:
+            existing_user_data = self.user_repo.get_user(user_id)
+            if not existing_user_data:
+                return user_not_found()
+            updated_user = self.user_repo.update_user_status(user_id, user_status_update.is_active)
+            if not updated_user:
+                return user_not_found()
+            response_data = UserStatusUpdateResponse(
+            is_active=updated_user.is_active
+            )
+            return update_user_status_response(response_data)
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )
+
+    async def delete_user_by_id(
+        self,
+        user_id: int
+    ) -> CommonResponse[UserResponse]:
+        try:
+            user = self.user_repo.delete_user(user_id)
+            if not user:
+                return user_not_found()
+            return delete_user_response(user)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+            )

@@ -1,0 +1,59 @@
+"""
+This module provides common configurations.
+"""
+
+# pylint: disable=E1136,E1131,W0108
+# pylint: disable=invalid-name
+
+from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
+from app.core.constants import boolean_constants
+
+load_dotenv(".env")
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_ignore_empty=True,
+        extra="ignore",
+    )
+
+    SET_ENV: str
+
+    ADMIN_EMAIL: str
+
+    ENABLE_SEED: str
+
+    ALLOW_ORIGINS: str
+    ALLOW_CREDENTIALS: str
+    ALLOW_METHODS: str
+    ALLOW_HEADERS: str
+
+    @property
+    def CORS_ALLOW_ORIGINS(self) -> list[str]:
+        return ["*"] if self.ALLOW_ORIGINS == "*" else self.ALLOW_ORIGINS.split()
+
+    @property
+    def CORS_ALLOW_CREDENTIALS(self) -> bool:
+        return env_vars.ALLOW_CREDENTIALS != boolean_constants.FALSE
+
+    @property
+    def CORS_ALLOW_METHODS(self) -> list[str]:
+        return ["*"] if self.ALLOW_METHODS == "*" else self.ALLOW_METHODS.split()
+
+    @property
+    def CORS_ALLOW_HEADERS(self) -> list[str]:
+        return ["*"] if self.ALLOW_HEADERS == "*" else self.ALLOW_HEADERS.split()
+
+
+settings = Settings()
+
+
+@lru_cache
+def get_settings():
+    return settings
+
+
+env_vars = get_settings()

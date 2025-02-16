@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+recursive-include fastapi_boilerplate_kit *.py
+recursive-include fastapi_boilerplate_kit/templates *.jinja
+

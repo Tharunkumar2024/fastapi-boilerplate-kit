@@ -1,0 +1,22 @@
+"""
+This module provides roles model.
+"""
+
+from sqlalchemy import Column, String, Integer
+from sqlalchemy.orm import relationship
+from app.models import BaseModel
+
+
+class Role(BaseModel):
+    __tablename__ = "roles"
+
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+
+    users = relationship("User", back_populates="role", lazy="joined")
+
+    created_by = Column(Integer, nullable=True)
+    updated_by = Column(Integer, nullable=True)
+
+    created_by_user = None
+    updated_by_user = None

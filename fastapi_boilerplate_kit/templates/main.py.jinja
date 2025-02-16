@@ -1,0 +1,80 @@
+"""
+This module provides main entry for API.
+"""
+
+# pylint: disable=unused-argument
+
+from contextlib import asynccontextmanager
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from app import models
+from app.api.router import router
+from app.database.database import get_session, engine
+from app.seeds import seed_roles, seed_users
+from app.core import env_vars, boolean_constants
+from utils.global_handlers.error_handler import (
+    handle_internal_server_error,
+    handle_validation_error
+)
+
+{% set formatted_project_name = project_name.split('_') | map('capitalize') | join(' ') %}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    '''Handle the schema and seeds by lifespan event'''
+    try:
+        db = get_session()
+        if engine:
+            models.Base.metadata.create_all(bind=engine)
+        print("Database schema created or already exists.")
+        if env_vars.ENABLE_SEED == boolean_constants.TRUE:
+            seed_roles(db)
+            seed_users(db)
+    except Exception as e:
+        print(f"Error during schema creation: {e}")
+    yield
+
+
+app = FastAPI(
+        lifespan=lifespan,
+        title="{{formatted_project_name}}",
+        description="Welcome to {{formatted_project_name}}",
+        version="1.0.0"
+    )
+
+app.include_router(router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=env_vars.CORS_ALLOW_ORIGINS,
+    allow_credentials=env_vars.CORS_ALLOW_CREDENTIALS,
+    allow_methods=env_vars.CORS_ALLOW_METHODS,
+    allow_headers=env_vars.CORS_ALLOW_HEADERS,
+)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exception: Exception):
+    '''Handle the unexpected errors globally'''
+    return await handle_internal_server_error(request, exception)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exception: RequestValidationError
+):
+    '''Handle the validations globally'''
+    return await handle_validation_error(request, exception)
+
+
+@app.get("/", tags=['Home'])
+async def root() -> dict:
+    '''Health Check of the API'''
+    return {"message": "{{project_name}}"}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
