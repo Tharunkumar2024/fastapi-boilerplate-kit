@@ -1,0 +1,27 @@
+"""
+This module provides roles seed.
+"""
+
+from sqlalchemy.orm import Session
+from app.models import Role
+
+
+def seed_roles(db: Session) -> None:
+    roles_data = [
+        {
+            'name': 'SuperAdmin',
+            'description': 'Super Admin Role',
+        }
+    ]
+
+    for role_data in roles_data:
+        role = db.query(Role).filter_by(name=role_data['name']).first()
+        if not role:
+            role = Role(**role_data, created_by=1, updated_by=1)
+            db.add(role)
+    db.commit()
+
+    for role in db.query(Role).filter(Role.name.in_([role['name'] for role in roles_data])).all():
+        db.refresh(role)
+
+    print("Roles seeded successfully.")

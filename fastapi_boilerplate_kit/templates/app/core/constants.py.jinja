@@ -1,0 +1,33 @@
+"""
+This module provides common constants.
+"""
+
+from collections import namedtuple
+
+RoleConstants = namedtuple("RoleConstants", ["SU"])
+
+role_constants = RoleConstants(
+    SU="SuperAdmin"
+)
+
+BooleanConstants = namedtuple("BooleanConstants", ["TRUE", "FALSE"])
+
+boolean_constants = BooleanConstants(
+    TRUE="TRUE",
+    FALSE="FALSE"
+)
+
+CharacterConstants = namedtuple("CharacterConstants", ["SHORT", "MEDIUM", "LONG"])
+
+character_constants = CharacterConstants(
+    SHORT=150,
+    MEDIUM=512,
+    LONG=1000
+)
+
+EnvironmentConstants = namedtuple("EnvironmentConstants", ["DEV", "PROD"])
+
+environment_constants = EnvironmentConstants(
+    DEV="DEV",
+    PROD="PROD"
+)

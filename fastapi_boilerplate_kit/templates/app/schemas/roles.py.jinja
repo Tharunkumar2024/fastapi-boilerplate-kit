@@ -1,0 +1,31 @@
+"""
+This module provides roles schemas.
+"""
+
+# pylint: disable=E1131
+
+from datetime import datetime
+from pydantic import BaseModel, Field
+from app.core import character_constants
+
+
+class RoleBase(BaseModel):
+    name: str = Field(..., max_length=character_constants.SHORT)
+    description: str = Field(..., max_length=character_constants.LONG)
+
+
+class RoleCreateRequest(RoleBase):
+    created_by: int = Field(..., gt=0)
+
+
+class RoleUpdateRequest(RoleBase):
+    description: str | None = None
+    updated_by: int | None = Field(..., gt=0)
+
+
+class RoleResponse(RoleCreateRequest, RoleUpdateRequest):
+    id: int = Field(...)
+
+    class Config:
+        from_attributes = True
+        json_encoders = {datetime: lambda v: v.isoformat()}

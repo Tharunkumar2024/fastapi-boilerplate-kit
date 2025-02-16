@@ -1,0 +1,52 @@
+"""
+This module provides database configurations.
+"""
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy_utils import database_exists, create_database
+from .config import env_vars
+
+
+def get_engine():
+    try:
+        global engine
+        url = env_vars.DATABASE_URL
+        print(url)
+        if not database_exists(url):
+            create_database(url)
+        engine = create_engine(url, pool_size=50, echo=False)
+        return engine
+    except Exception as e:
+        raise ValueError(f"Error connecting to the database: {e}")
+
+
+def get_engine_from_config():
+    {% include "partials/app/database/" + db_config + "_db.jinja" %}
+    missing_keys = [key for key in required_keys if not hasattr(env_vars, key)]
+
+    if missing_keys:
+        raise ValueError(
+            f"Missing environment variables: {', '.join(missing_keys)}"
+        )
+
+    return get_engine()
+
+
+engine = get_engine_from_config()
+
+
+def get_session():
+    session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    return session()
+
+
+Base = declarative_base()
+
+
+def get_db():
+    db = get_session()
+    try:
+        yield db
+    finally:
+        db.close()

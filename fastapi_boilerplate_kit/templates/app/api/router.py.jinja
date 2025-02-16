@@ -1,0 +1,12 @@
+"""
+This module provides all routers.
+"""
+
+from fastapi import APIRouter
+from app.api.v1 import roles_router
+from app.api.v1 import users_router
+
+router = APIRouter(prefix="/api")
+
+router.include_router(roles_router, prefix="/v1")
+router.include_router(users_router, prefix="/v1")

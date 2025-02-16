@@ -1,0 +1,134 @@
+"""
+This module provides role controller.
+"""
+
+# pylint: disable=invalid-name
+# pylint: disable=E1136,E1131
+
+from fastapi import APIRouter, Depends, status
+from fastapi.exceptions import HTTPException
+from sqlalchemy.orm import Session
+from app.services import RolesService
+from app.schemas import (
+    RoleResponse,
+    RoleCreateRequest,
+    RoleUpdateRequest
+)
+from app.database.database import get_db
+from app.schemas.commons import CommonResponse
+
+router = APIRouter(prefix="/roles")
+
+API_TAG = 'Roles'
+RESPONSE_MODEL = RoleResponse
+
+
+def get_role_service(
+    db: Session = Depends(get_db)
+) -> RolesService:
+    return RolesService(db)
+
+
+@router.post(
+    '',
+    tags=[API_TAG],
+    response_model=CommonResponse[RESPONSE_MODEL]
+)
+async def create_role(
+    role: RoleCreateRequest,
+    role_service: RolesService = Depends(
+        get_role_service
+    )
+) -> CommonResponse[RoleResponse]:
+    try:
+        response = await role_service.create_role(
+            role
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.get(
+    '',
+    tags=[API_TAG],
+    response_model=CommonResponse[list[RESPONSE_MODEL]]
+)
+async def get_all_roles(
+    role_service: RolesService = Depends(
+        get_role_service
+    )
+) -> CommonResponse[list[RoleResponse]]:
+    try:
+        response = await role_service.get_all_roles()
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.get(
+    '/{_id}',
+    tags=[API_TAG],
+    response_model=CommonResponse[RESPONSE_MODEL]
+)
+async def get_role_by_id(
+    _id: int,
+    role_service: RolesService = Depends(
+        get_role_service
+    )
+) -> CommonResponse[RoleResponse]:
+    try:
+        response = await role_service.get_role_by_id(_id)
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.patch(
+    '/{_id}',
+    tags=[API_TAG],
+    response_model=CommonResponse[RESPONSE_MODEL]
+)
+async def update_role_by_id(
+    _id: int,
+    role: RoleUpdateRequest,
+    role_service: RolesService = Depends(
+        get_role_service
+    )
+) -> CommonResponse[RoleResponse]:
+    try:
+        response = await role_service.update_role_by_id(
+            _id,
+            role
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )
+
+
+@router.delete(
+    '/{_id}',
+    tags=[API_TAG],
+    response_model=CommonResponse[RESPONSE_MODEL]
+)
+async def delete_role_by_id(
+    _id: int,
+    role_service: RolesService = Depends(
+        get_role_service
+    )
+) -> CommonResponse[RoleResponse]:
+    try:
+        response = await role_service.delete_role_by_id(_id)
+        return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
+        )

@@ -1,0 +1,34 @@
+"""
+This module provides configuration.
+"""
+
+# pylint: disable=invalid-name
+
+from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
+
+load_dotenv(".env")
+
+
+class Settings(BaseSettings):
+    DATABASE_TYPE: str
+    {% include "partials/app/database/" + db_config + "_db_settings.jinja" %}
+
+    model_config = SettingsConfigDict(
+        env_file="../.env",
+        env_ignore_empty=True,
+        extra="ignore",
+        env_file_encoding="utf-8"
+    )
+
+
+settings = Settings()
+
+
+@lru_cache
+def get_settings():
+    return settings
+
+
+env_vars = get_settings()

@@ -1,0 +1,55 @@
+"""
+This module provides role response schemas.
+"""
+
+# pylint: disable=unsupported-binary-operation
+# pylint: disable=E1136,E1131
+
+from fastapi.responses import JSONResponse
+from app.schemas import RoleResponse
+from app.schemas.commons.base_response import CommonResponse
+
+
+def create_role_response(
+    data: RoleResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[RoleResponse].create(data, meta)
+
+
+def get_role_response(
+    data: RoleResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[RoleResponse].fetch(data, meta)
+
+
+def get_all_role_response(
+    data: list[RoleResponse],  
+    meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[
+        list[RoleResponse]
+    ].fetch(data, meta)
+
+
+def update_role_response(
+    data: RoleResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[RoleResponse].update(data, meta)
+
+
+def delete_role_response(
+    data: RoleResponse, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[RoleResponse].delete(data, meta)
+
+
+def role_not_found_response(
+    message: str, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[RoleResponse].not_found(message, meta)
+
+
+def role_error_response(
+    message: str, meta: dict | None = None
+) -> JSONResponse:
+    return CommonResponse[RoleResponse].error(message, meta)
