@@ -1,0 +1,58 @@
+"""
+This module provides roles repository.
+"""
+
+# pylint: disable=E1136,E1131
+
+from sqlalchemy.orm import Session
+from app.models import Role
+
+
+class RolesRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create_role(self, role_data: dict) -> Role:
+        db_role = Role(**role_data)
+        self.db.add(db_role)
+        self.db.commit()
+        self.db.refresh(db_role)
+
+        return db_role
+
+    def get_role(self, role_id: int) -> Role:
+        return (
+            self.db.query(Role).filter(
+                Role.id == role_id
+            ).first()
+        )
+
+    def get_all_roles(
+        self
+    ) -> list[Role]:
+        return self.db.query(Role).all()
+
+    def update_role(
+        self,
+        role_id: int,
+        role_data: dict
+    ) -> Role:
+        db_role = self.get_role(role_id)
+        if db_role:
+            role_data.pop('updated_at', None)
+            for key, value in role_data.items():
+                setattr(db_role, key, value)
+            self.db.commit()
+            self.db.refresh(db_role)
+        return db_role
+
+    def delete_role(
+        self,
+        role_id: int
+    ) -> bool | Role:
+        db_role = self.get_role(role_id)
+        if db_role:
+            self.db.delete(db_role)
+            self.db.commit()
+            return db_role
+        return False

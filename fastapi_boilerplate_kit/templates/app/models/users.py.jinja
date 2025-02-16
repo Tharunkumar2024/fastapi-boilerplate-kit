@@ -1,0 +1,30 @@
+"""
+This module provides users model.
+"""
+
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import expression
+from app.models import BaseModel
+
+
+class User(BaseModel):
+    __tablename__ = "users"
+
+    role_id = Column(Integer, ForeignKey("roles.id", ondelete="SET NULL"), nullable=True, server_default=expression.null())
+    username = Column(String, nullable=False)
+    firstname = Column(String, nullable=False)
+    lastname = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    is_active = Column(Boolean, nullable=False)
+    profile_image_url = Column(String, nullable=True)
+
+    invitor = relationship(
+        "User",
+        backref="invited_users",
+        primaryjoin="User.id == remote(User.created_by)",
+        foreign_keys="[User.created_by]",
+        lazy="selectin",
+    )
+
+    role = relationship("Role", back_populates="users", lazy="joined")

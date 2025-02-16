@@ -1,0 +1,51 @@
+"""
+This module provides global error handler for API.
+"""
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi import status
+
+
+def log_exception(request: Request, exception: Exception):
+    print(f"Request URL: {request.url}")
+    print(f"Method: {request.method}")
+    print(f"Headers: {request.headers}")
+    print(f"Unhandled exception/error: {str(exception)}")
+
+
+async def handle_internal_server_error(
+    request: Request,
+    exception: Exception
+):
+    log_exception(request, exception)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "status": "error",
+            "code": 500,
+            "message": "Internal Server Error",
+            "errors": [
+                {"code": "INTERNAL_SERVER_ERROR", "message": str(exception)}
+            ],
+        }
+    )
+
+
+async def handle_validation_error(
+    request: Request,
+    exception: RequestValidationError
+):
+    log_exception(request, exception)
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={
+            "status": "error",
+            "code": 422,
+            "message": "Validation Error",
+            "errors": [
+                {"code": "VALIDATION_ERROR", "message": exception.errors()}
+            ],
+        },
+    )

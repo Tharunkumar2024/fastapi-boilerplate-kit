@@ -8,42 +8,50 @@ import os
 import sys
 import click
 from fastapi_boilerplate_kit.generate import generate_project
+from fastapi_boilerplate_kit import __version__
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 
-@click.group()
-def cli():
-    """Main command group for fastapi-boilerplate."""
+def print_version(ctx, _, value):
+    """Print the version of the fastapi-boilerplate-kit and exit."""
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(f'DND(fastapi-boilerplate-kit) {__version__}')
+    ctx.exit()
 
+
+@click.group(invoke_without_command=True)
+@click.option(
+    '-V',
+    '--version',
+    is_flag=True,
+    callback=print_version,
+    help='Show the version and exit.',
+    expose_value=False,
+    is_eager=True
+)
+def cli():
+    """
+    Main command group for fastapi-boilerplate.
+    
+    This tool generates a basic FastAPI project boilerplate.
+    """
 
 @cli.command()
 @click.argument('project_name')
-@click.option(
-    '--sqlalchemy',
-    is_flag=True,
-    default=False,
-    help='Include SQLAlchemy in the generated project'
-)
-@click.option(
-    '--alembic',
-    is_flag=True,
-    default=False,
-    help='Include Alembic in the generated project'
-)
-def generate(project_name, sqlalchemy, alembic):
-    if sqlalchemy and alembic:
-        print("Generating project with SQLAlchemy and Alembic.")
-        generate_project(project_name, sqlalchemy=True, alembic=True)
-    elif sqlalchemy:
-        print("Generating project with SQLAlchemy.")
-        generate_project(project_name, sqlalchemy=True, alembic=False)
-    elif alembic:
-        print("Generating project with Alembic.")
-        generate_project(project_name, sqlalchemy=False, alembic=True)
-    else:
-        print("Generating project without SQLAlchemy or Alembic.")
-        generate_project(project_name, sqlalchemy=False, alembic=False)
+def generate(project_name):
+    """Generate a FastAPI boilerplate project with the specified project name.
+
+    Args:\n
+    project_name (str): The name of the project to be generated.
+    
+    This command will create the necessary directory structure and files
+    for a FastAPI project with a basic setup.
+    """
+    print("Generating project with default basic setup.")
+    generate_project(project_name)
+
 
 if __name__ == '__main__':
     cli()

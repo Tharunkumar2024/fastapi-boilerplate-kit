@@ -1,0 +1,8 @@
+DATABASE_PATH: str
+
+    @property
+    def DATABASE_URL(self) -> str:
+        url = (
+            f"{self.DATABASE_TYPE}:///{self.DATABASE_PATH}"
+        )
+        return url

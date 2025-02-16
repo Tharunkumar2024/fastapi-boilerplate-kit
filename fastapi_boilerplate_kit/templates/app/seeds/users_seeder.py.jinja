@@ -1,0 +1,38 @@
+"""
+This module provides users seed.
+"""
+
+from sqlalchemy.orm import Session
+from app.models import User, Role
+from app.core import env_vars
+
+
+def seed_users(db: Session) -> None:
+    users_data = [
+        {
+            'username': 'Super Admin',
+            'firstname': 'Super',
+            'lastname': 'Admin',
+            'email': env_vars.ADMIN_EMAIL,
+            'is_active': True,
+            'profile_image_url': None,
+            'role_name': 'SuperAdmin'
+        }
+    ]
+
+    for user_data in users_data:
+        role = db.query(Role).filter_by(name=user_data['role_name']).first()
+        if not role:
+            raise ValueError(f"Role {user_data['role_name']} does not exist.")
+
+        user = db.query(User).filter_by(email=user_data['email']).first()
+        if not user:
+            user_data.pop('role_name')
+            user = User(**user_data, created_by=1, updated_by=1, role_id=role.id)
+            db.add(user)
+    db.commit()
+
+    for user in db.query(User).filter(User.email.in_([user['email'] for user in users_data])).all():
+        db.refresh(user)
+
+    print("Users seeded successfully.")

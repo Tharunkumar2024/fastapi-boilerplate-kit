@@ -1,0 +1,275 @@
+"""
+This module provides documents schemas.
+"""
+
+# pylint: disable=unsupported-binary-operation
+
+from datetime import datetime
+from typing import TypeVar, Generic
+from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+
+T = TypeVar('T', bound=BaseModel)
+
+
+def generate_json_response(
+    response_model: BaseModel,
+    status_code: int = 200,
+    exclude_none: bool = True
+) -> JSONResponse:
+    content = response_model.model_dump(exclude_none=exclude_none)
+    serialize_datetime_fields(content)
+    return JSONResponse(
+        content=content,
+        status_code=status_code
+    )
+
+
+def serialize_datetime_fields(data: dict):
+    for key, value in data.items():
+        if isinstance(value, datetime):
+            data[key] = value.isoformat()
+        elif isinstance(value, dict):
+            serialize_datetime_fields(value)
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    serialize_datetime_fields(item)
+    return data
+
+
+class CommonResponse(BaseModel, Generic[T]):
+    status: str
+    code: int
+    message: str
+    data: T | None = None
+    meta: dict | None = None
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+    @classmethod
+    def create(cls, data: T, meta: dict | None = None) -> JSONResponse:
+        response = cls(
+            status="success",
+            code=201,
+            message="Successfully created",
+            data=data,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def update(cls, data: T, meta: dict | None = None) -> JSONResponse:
+        response = cls(
+            status="success",
+            code=200,
+            message="Successfully updated",
+            data=data,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def delete(cls, data: T, meta: dict | None = None) -> JSONResponse:
+        response = cls(
+            status="success",
+            code=200,
+            message="Successfully deleted",
+            data=data,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def fetch(
+        cls, data: T, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="success",
+            code=200,
+            message="Successfully fetched",
+            data=data,
+            meta=meta
+        )
+        return generate_json_response(response, exclude_none=False)
+
+    @classmethod
+    def success(
+        cls,
+        code: int,
+        message: str,
+        data: T,
+        meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="success",
+            code=code,
+            message=message,
+            data=data,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def error(
+        cls, code: int, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=code,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def bad_request(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=400,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def unauthorized(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=401,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def forbidden(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=403,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def not_found(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=404,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def conflict(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=409,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def request_entity_too_large(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=413,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def request_uri_too_long(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=414,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def unsupported_media_type(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=415,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def too_many_requests(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=429,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+    @classmethod
+    def service_unavailable(
+        cls, message: str, meta: dict | None = None
+    ) -> JSONResponse:
+        response = cls(
+            status="error",
+            code=503,
+            message=message,
+            data=None,
+            meta=meta
+        )
+        return generate_json_response(response)
+
+
+class RawResponse(BaseModel, Generic[T]):
+    data: T
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+    @classmethod
+    def raw(cls, data: T) -> JSONResponse:
+        response = cls(data=data)
+        return generate_json_response(response, exclude_none=False)

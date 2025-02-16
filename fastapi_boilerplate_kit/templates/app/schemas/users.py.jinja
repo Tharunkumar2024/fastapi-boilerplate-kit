@@ -1,0 +1,147 @@
+"""
+This module provides users schemas.
+"""
+
+# pylint: disable=too-many-arguments
+# ruff: noqa: PLR0917
+# pylint: disable=E1131,E1136
+
+from typing import Optional
+from datetime import datetime
+from pydantic import BaseModel, Field, EmailStr, model_validator
+from fastapi import Form
+from app.core import character_constants
+
+
+class UserBase(BaseModel):
+    role_id: int = Field(..., gt=0)
+    username: str = Field(max_length=character_constants.SHORT)
+    firstname: str = Field(max_length=character_constants.SHORT)
+    lastname: str = Field(max_length=character_constants.SHORT)
+    email: EmailStr = Field(max_length=character_constants.SHORT)
+    is_active: bool = Field(False)
+
+
+class UserCreateRequest(UserBase):
+    created_by: int = Field(..., gt=0)
+
+
+class UserUpdateRequest(UserBase):
+    role_id: int | None = None
+    username: str | None = None
+    firstname: str | None = None
+    lastname: str | None = None
+    email: EmailStr | None = None
+    is_active: bool = False
+
+    updated_by: int | None = Field(..., gt=0)
+
+
+class UserResponse(UserCreateRequest, UserUpdateRequest):
+    id: int = Field(...)
+    profile_image_url: str | None
+    invited_by_username: str = None
+    created_at: datetime | None
+    updated_at: datetime | None
+
+    @model_validator(mode="before")
+    @classmethod
+    def invited_by_user(cls, values):
+        invited_users = getattr(values, "invited_users", None)
+        values.invited_by_username = invited_users.username
+        return values
+
+    class Config:
+        from_attributes = True
+        json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+class UserCreateDefaultRequest(BaseModel):
+    role_id: int
+    username: str
+    firstname: str
+    lastname: str
+    email: EmailStr
+    is_active: bool
+
+    created_by: int
+
+    @classmethod
+    def as_form(
+        cls,
+        role_id: int = Form(..., gt=0),
+        username: str = Form(...),
+        firstname: str = Form(...),
+        lastname: str = Form(...),
+        email: EmailStr = Form(...),
+        is_active: bool = Form(...),
+        created_by: int = Form(..., gt=0),
+    ) -> "UserCreateDefaultRequest":
+        return cls(
+            role_id=role_id,
+            username=username,
+            firstname=firstname,
+            lastname=lastname,
+            email=email,
+            is_active=is_active,
+            created_by=created_by,
+        )
+
+
+class UserUpdateDefaultRequest(BaseModel):
+    role_id: Optional[int] = Field(None, gt=0)
+    username: Optional[str] = None
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+    updated_by: int = Field(..., gt=0)
+
+    @classmethod
+    # pylint: disable=too-many-arguments
+    def as_form(
+        cls,
+        role_id: Optional[str] = Form(None),
+        username: Optional[str] = Form(None),
+        firstname: Optional[str] = Form(None),
+        lastname: Optional[str] = Form(None),
+        email: Optional[str] = Form(None),
+        is_active: Optional[str] = Form(None),
+        updated_by: int = Form(...),
+    ) -> "UserUpdateDefaultRequest":
+        role_id_parsed = None if not role_id else int(role_id)
+        email_parsed = None if not email else email
+
+        is_active_parsed = None
+        if is_active is not None:
+            if is_active.lower() in ("true", "t", "1", "yes", "y"):
+                is_active_parsed = True
+            elif is_active.lower() in ("false", "f", "0", "no", "n"):
+                is_active_parsed = False
+            elif is_active == "":
+                is_active_parsed = None
+            else:
+                raise ValueError("Invalid boolean value for is_active")
+
+        if role_id_parsed is not None and role_id_parsed <= 0:
+            raise ValueError("role_id must be greater than 0")
+        if updated_by <= 0:
+            raise ValueError("updated_by must be greater than 0")
+
+        return cls(
+            role_id=role_id_parsed,
+            username=username,
+            firstname=firstname,
+            lastname=lastname,
+            email=email_parsed,
+            is_active=is_active_parsed,
+            updated_by=updated_by,
+        )
+
+
+class UserStatusUpdateRequest(BaseModel):
+    is_active: bool
+
+
+class UserStatusUpdateResponse(BaseModel):
+    is_active: bool | None
