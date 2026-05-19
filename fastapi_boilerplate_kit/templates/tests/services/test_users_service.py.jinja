@@ -1,0 +1,19 @@
+"""
+Users service tests.
+"""
+
+from unittest.mock import MagicMock
+from app.services.users import UsersService
+{% if with_auth %}
+from app.repositories.scopes import ScopeContext
+{% endif %}
+
+
+def test_users_service_can_be_initialized():
+    fake_db = MagicMock()
+    service = UsersService(fake_db)
+{% if with_auth %}
+    _ = ScopeContext(is_superuser=True)
+{% endif %}
+
+    assert service is not None

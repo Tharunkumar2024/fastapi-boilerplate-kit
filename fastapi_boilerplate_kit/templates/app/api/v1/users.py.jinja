@@ -7,6 +7,7 @@ This module provides user controller.
 
 from fastapi import APIRouter, Depends, status, Query
 from fastapi.exceptions import HTTPException
+from fastapi_pagination import Page, Params
 from sqlalchemy.orm import Session
 from pydantic import EmailStr
 from app.services import UsersService
@@ -19,6 +20,12 @@ from app.schemas import (
 )
 from app.database.database import get_db
 from app.schemas.commons import CommonResponse
+{% if with_auth %}
+from app.dependencies.auth import get_scope_context
+from app.dependencies.authorization import require_any_role
+from app.repositories.scopes import ScopeContext
+from app.core.constants import role_constants
+{% endif %}
 
 router = APIRouter(prefix="/users")
 
@@ -37,6 +44,9 @@ async def create_user(
     user: UserCreateDefaultRequest = Depends(
         UserCreateDefaultRequest.as_form
     ),
+{% if with_auth %}
+    _: ScopeContext = Depends(require_any_role([role_constants.SU])),
+{% endif %}
     user_service: UsersService = Depends(
         get_user_service
     )
@@ -46,31 +56,45 @@ async def create_user(
             user
         )
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
 
 
 @router.get(
     '',
     tags=[API_TAG],
     response_model=CommonResponse[
-        list[RESPONSE_MODEL]
+        Page[RESPONSE_MODEL]
     ]
 )
 async def get_all_users(
+    params: Params = Depends(),
+{% if with_auth %}
+    scope_context: ScopeContext = Depends(get_scope_context),
+    _: dict = Depends(require_any_role([role_constants.SU])),
+{% endif %}
     user_service: UsersService = Depends(
         get_user_service
     )
-) -> CommonResponse[list[UserResponse]]:
+) -> CommonResponse[Page[UserResponse]]:
     try:
-        response = await user_service.get_all_users()
+        response = await user_service.get_all_users(
+            params=params,
+{% if with_auth %}
+            scope_context=scope_context,
+{% endif %}
+        )
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
 
 
 @router.get(
@@ -80,6 +104,9 @@ async def get_all_users(
 )
 async def get_user_by_id(
     _id: int,
+{% if with_auth %}
+    _: ScopeContext = Depends(require_any_role([role_constants.SU])),
+{% endif %}
     user_service: UsersService = Depends(
         get_user_service
     )
@@ -87,10 +114,12 @@ async def get_user_by_id(
     try:
         response = await user_service.get_user_by_id(_id)
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
 
 
 @router.patch(
@@ -103,6 +132,9 @@ async def update_user_by_id(
     user: UserUpdateDefaultRequest = Depends(
         UserUpdateDefaultRequest.as_form
     ),
+{% if with_auth %}
+    _: ScopeContext = Depends(require_any_role([role_constants.SU])),
+{% endif %}
     user_service: UsersService = Depends(
         get_user_service
     )
@@ -113,10 +145,12 @@ async def update_user_by_id(
             user
         )
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
 
 
 @router.patch(
@@ -127,6 +161,9 @@ async def update_user_by_id(
 async def update_user_status(
     _id: int,
     user_status_update: UserStatusUpdateRequest,
+{% if with_auth %}
+    _: ScopeContext = Depends(require_any_role([role_constants.SU])),
+{% endif %}
     user_service: UsersService = Depends(
         get_user_service
     )
@@ -137,10 +174,12 @@ async def update_user_status(
             user_status_update
         )
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
 
 
 @router.delete(
@@ -150,6 +189,9 @@ async def update_user_status(
     )
 async def delete_user_by_id(
     _id: int,
+{% if with_auth %}
+    _: ScopeContext = Depends(require_any_role([role_constants.SU])),
+{% endif %}
     user_service: UsersService = Depends(
         get_user_service
     )
@@ -157,7 +199,9 @@ async def delete_user_by_id(
     try:
         response = await user_service.delete_user_by_id(_id)
         return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-        )
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e

@@ -1,0 +1,17 @@
+"""
+Authentication and authorization dependencies exports.
+"""
+
+from app.dependencies.auth import (
+    get_current_token_payload,
+    get_scope_context,
+    require_authenticated_user,
+)
+from app.dependencies.authorization import require_any_role
+
+__all__ = [
+    "get_current_token_payload",
+    "get_scope_context",
+    "require_authenticated_user",
+    "require_any_role",
+]

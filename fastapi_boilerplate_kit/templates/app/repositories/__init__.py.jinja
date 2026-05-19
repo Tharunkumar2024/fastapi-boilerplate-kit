@@ -10,3 +10,14 @@ from .roles import (
 from .users import (
     UsersRepository
 )
+{% if with_auth %}
+from .auth import (
+    AuthRepository,
+)
+{% endif %}
+{% if with_auth %}
+from .scopes import (
+    ScopeContext,
+    apply_user_scope,
+)
+{% endif %}

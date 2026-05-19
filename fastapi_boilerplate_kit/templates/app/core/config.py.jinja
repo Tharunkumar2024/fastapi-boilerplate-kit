@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     SET_ENV: str
 
     ADMIN_EMAIL: str
+{% if with_auth %}
+    ADMIN_PASSWORD: str = ""
+{% endif %}
 
     ENABLE_SEED: str
 
@@ -30,6 +33,26 @@ class Settings(BaseSettings):
     ALLOW_CREDENTIALS: str
     ALLOW_METHODS: str
     ALLOW_HEADERS: str
+{% if with_auth %}
+    AUTH_ENABLED: str = "FALSE"
+    JWT_SECRET_KEY: str = ""
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = 43200
+    JWT_RESET_TOKEN_EXPIRE_MINUTES: int = 30
+    JWT_INVITE_TOKEN_EXPIRE_MINUTES: int = 10080
+    FRONTEND_REGISTER_URL: str = ""
+    FRONTEND_RESET_PASSWORD_URL: str = ""
+{% endif %}
+{% if with_email %}
+    EMAIL_ENABLED: str = "FALSE"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_SENDER: str = ""
+    SMTP_USE_TLS: str = "TRUE"
+{% endif %}
 
     @property
     def CORS_ALLOW_ORIGINS(self) -> list[str]:
@@ -46,6 +69,22 @@ class Settings(BaseSettings):
     @property
     def CORS_ALLOW_HEADERS(self) -> list[str]:
         return ["*"] if self.ALLOW_HEADERS == "*" else self.ALLOW_HEADERS.split()
+{% if with_auth %}
+
+    @property
+    def is_auth_enabled(self) -> bool:
+        return self.AUTH_ENABLED == boolean_constants.TRUE
+{% endif %}
+{% if with_email %}
+
+    @property
+    def is_email_enabled(self) -> bool:
+        return self.EMAIL_ENABLED == boolean_constants.TRUE
+
+    @property
+    def is_smtp_tls_enabled(self) -> bool:
+        return self.SMTP_USE_TLS == boolean_constants.TRUE
+{% endif %}
 
 
 settings = Settings()

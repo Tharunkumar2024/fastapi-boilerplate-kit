@@ -6,3 +6,6 @@ This module provides seeds imports.
 
 from .users_seeder import seed_users
 from .roles_seeder import seed_roles
+{% if with_auth %}
+from .initial_admin_seeder import seed_initial_admin
+{% endif %}

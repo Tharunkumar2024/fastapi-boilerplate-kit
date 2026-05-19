@@ -22,7 +22,11 @@ def get_engine():
 
 
 def get_engine_from_config():
-    {% include "partials/app/database/" + db_config + "_db.jinja" %}
+    {% if db_config == "sqlite" %}
+    {% include "partials/app/database/sqlite_db.jinja" %}
+    {% else %}
+    {% include "partials/app/database/server_db.jinja" %}
+    {% endif %}
     missing_keys = [key for key in required_keys if not hasattr(env_vars, key)]
 
     if missing_keys:

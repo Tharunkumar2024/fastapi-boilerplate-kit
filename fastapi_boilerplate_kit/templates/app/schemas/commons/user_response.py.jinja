@@ -6,6 +6,7 @@ This module provides user response schemas.
 # pylint: disable=E1136,E1131
 
 from fastapi.responses import JSONResponse
+from fastapi_pagination import Page
 from app.schemas import (
     UserResponse,
     UserStatusUpdateResponse,
@@ -26,10 +27,10 @@ def get_user_response(
 
 
 def get_all_user_response(
-    data: list[UserResponse],
+    data: Page[UserResponse],
     meta: dict | None = None
 ) -> JSONResponse:
-    return CommonResponse[list[UserResponse]].fetch(data, meta)
+    return CommonResponse[Page[UserResponse]].fetch(data, meta)
 
 
 def update_user_response(
