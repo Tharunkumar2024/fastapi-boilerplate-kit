@@ -1,0 +1,9 @@
+"""
+Application middleware exports.
+"""
+
+from app.middlewares.auth import JWTAuthMiddleware
+
+__all__ = [
+    "JWTAuthMiddleware",
+]

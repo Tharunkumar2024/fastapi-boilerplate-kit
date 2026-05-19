@@ -1,0 +1,16 @@
+"""
+This module provides email schemas.
+"""
+
+from pydantic import BaseModel, EmailStr, Field
+
+
+class EmailMessageRequest(BaseModel):
+    recipient: EmailStr
+    subject: str = Field(..., min_length=1, max_length=255)
+    body: str = Field(..., min_length=1, max_length=5000)
+
+
+class EmailMessageResponse(BaseModel):
+    delivered: bool
+    detail: str

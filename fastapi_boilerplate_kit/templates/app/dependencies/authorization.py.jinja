@@ -1,0 +1,25 @@
+"""
+This module provides authorization dependencies.
+"""
+
+from fastapi import Depends, HTTPException, status
+from app.dependencies.auth import get_scope_context
+from app.repositories.scopes import ScopeContext
+
+
+def require_any_role(allowed_roles: list[str]):
+    async def _require_role(
+        scope_context: ScopeContext = Depends(get_scope_context),
+    ) -> ScopeContext:
+        if scope_context.is_superuser:
+            return scope_context
+
+        if scope_context.role_name not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+
+        return scope_context
+
+    return _require_role

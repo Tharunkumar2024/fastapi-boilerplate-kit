@@ -11,7 +11,11 @@ def seed_roles(db: Session) -> None:
         {
             'name': 'SuperAdmin',
             'description': 'Super Admin Role',
-        }
+        },
+        {
+            'name': 'User',
+            'description': 'Default self-service registration role',
+        },
     ]
 
     for role_data in roles_data:

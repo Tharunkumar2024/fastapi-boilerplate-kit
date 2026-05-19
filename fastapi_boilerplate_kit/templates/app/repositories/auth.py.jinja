@@ -1,0 +1,57 @@
+"""
+This module provides auth repository.
+"""
+
+from datetime import datetime, timezone
+from sqlalchemy.orm import Session
+from app.models import User, AuthToken
+
+
+class AuthRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_user_by_email(self, email: str) -> User | None:
+        return self.db.query(User).filter(User.email == email).first()
+
+    def get_user_by_id(self, user_id: int) -> User | None:
+        return self.db.query(User).filter(User.id == user_id).first()
+
+    def update_user(self, user: User) -> User:
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def create_user(self, user_data: dict) -> User:
+        user = User(**user_data)
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def create_auth_token(self, token_data: dict) -> AuthToken:
+        token = AuthToken(**token_data)
+        self.db.add(token)
+        self.db.commit()
+        self.db.refresh(token)
+        return token
+
+    def get_auth_token(self, token_hash: str, purpose: str) -> AuthToken | None:
+        return (
+            self.db.query(AuthToken)
+            .filter(
+                AuthToken.token_hash == token_hash,
+                AuthToken.purpose == purpose,
+                AuthToken.used_at.is_(None),
+            )
+            .first()
+        )
+
+    def mark_auth_token_used(self, token: AuthToken) -> AuthToken:
+        token.used_at = datetime.now(timezone.utc)
+        self.db.add(token)
+        self.db.commit()
+        self.db.refresh(token)
+        return token
+

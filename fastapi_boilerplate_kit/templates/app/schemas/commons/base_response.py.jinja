@@ -103,8 +103,8 @@ class CommonResponse(BaseModel, Generic[T]):
         cls,
         code: int,
         message: str,
-        data: T,
-        meta: dict | None = None
+        data: T | None = None,
+        meta: dict | None = None,
     ) -> JSONResponse:
         response = cls(
             status="success",
@@ -113,7 +113,10 @@ class CommonResponse(BaseModel, Generic[T]):
             data=data,
             meta=meta
         )
-        return generate_json_response(response)
+        return generate_json_response(
+            response,
+            exclude_none=data is not None or meta is not None,
+        )
 
     @classmethod
     def error(

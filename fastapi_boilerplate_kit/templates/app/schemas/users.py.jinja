@@ -37,18 +37,28 @@ class UserUpdateRequest(UserBase):
     updated_by: int | None = Field(..., gt=0)
 
 
-class UserResponse(UserCreateRequest, UserUpdateRequest):
+class UserResponse(BaseModel):
     id: int = Field(...)
-    profile_image_url: str | None
-    invited_by_username: str = None
-    created_at: datetime | None
-    updated_at: datetime | None
+    role_id: int | None = None
+    username: str
+    firstname: str
+    lastname: str
+    email: EmailStr
+    is_active: bool
+    created_by: int | None = None
+    updated_by: int | None = None
+    profile_image_url: str | None = None
+    invited_by_username: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     @model_validator(mode="before")
     @classmethod
     def invited_by_user(cls, values):
         invited_users = getattr(values, "invited_users", None)
-        values.invited_by_username = invited_users.username
+        values.invited_by_username = (
+            invited_users.username if invited_users else None
+        )
         return values
 
     class Config:

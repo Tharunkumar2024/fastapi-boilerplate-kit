@@ -23,8 +23,14 @@ class RoleUpdateRequest(RoleBase):
     updated_by: int | None = Field(..., gt=0)
 
 
-class RoleResponse(RoleCreateRequest, RoleUpdateRequest):
+class RoleResponse(BaseModel):
     id: int = Field(...)
+    name: str
+    description: str | None = None
+    created_by: int | None = None
+    updated_by: int | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True

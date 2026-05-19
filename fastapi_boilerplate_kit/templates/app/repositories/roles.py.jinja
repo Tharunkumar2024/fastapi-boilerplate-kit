@@ -5,7 +5,7 @@ This module provides roles repository.
 # pylint: disable=E1136,E1131
 
 from sqlalchemy.orm import Session
-from app.models import Role
+from app.models import Role, User
 
 
 class RolesRepository:
@@ -26,6 +26,15 @@ class RolesRepository:
                 Role.id == role_id
             ).first()
         )
+
+    def get_role_by_name(self, name: str) -> Role | None:
+        return self.db.query(Role).filter(Role.name == name).first()
+
+    def count_users_with_role_name(self, name: str) -> int:
+        role = self.get_role_by_name(name)
+        if not role:
+            return 0
+        return self.db.query(User).filter(User.role_id == role.id).count()
 
     def get_all_roles(
         self

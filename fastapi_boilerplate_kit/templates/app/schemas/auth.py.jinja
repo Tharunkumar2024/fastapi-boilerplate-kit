@@ -1,0 +1,88 @@
+"""
+This module provides authentication schemas.
+"""
+
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+
+PASSWORD_PATTERN = re.compile(
+    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,128}$"
+)
+
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    firstname: str = Field(..., min_length=1, max_length=150)
+    lastname: str = Field(..., min_length=1, max_length=150)
+    password: str = Field(..., min_length=8, max_length=128)
+    invite_token: str | None = None
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        if PASSWORD_PATTERN.match(value):
+            return value
+        raise ValueError(
+            "Password must include upper, lower, number, and special character"
+        )
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(..., min_length=1)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password_strength(cls, value: str) -> str:
+        if PASSWORD_PATTERN.match(value):
+            return value
+        raise ValueError(
+            "Password must include upper, lower, number, and special character"
+        )
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=8, max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password_strength(cls, value: str) -> str:
+        if PASSWORD_PATTERN.match(value):
+            return value
+        raise ValueError(
+            "Password must include upper, lower, number, and special character"
+        )
+
+
+class InviteRequest(BaseModel):
+    email: EmailStr
+    role_id: int = Field(..., gt=0)
+
+
+class AuthTokensResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    refresh_expires_in: int
+    must_change_password: bool = False
+
+
+class AuthMessageResponse(BaseModel):
+    message: str
+

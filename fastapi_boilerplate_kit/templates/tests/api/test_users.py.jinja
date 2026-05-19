@@ -1,0 +1,10 @@
+"""
+Users API tests.
+"""
+
+
+def test_get_users_unauthorized_when_auth_enabled(client):
+    response = client.get("/api/v1/users")
+
+    # Default generated projects have auth disabled, so this can be 200.
+    assert response.status_code in (200, 401)

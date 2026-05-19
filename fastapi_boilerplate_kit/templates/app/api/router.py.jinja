@@ -3,10 +3,30 @@ This module provides all routers.
 """
 
 from fastapi import APIRouter
+{% if with_auth %}
+from fastapi import Depends
+{% endif %}
 from app.api.v1 import roles_router
 from app.api.v1 import users_router
+{% if with_auth %}
+from app.api.v1 import auth_router
+from app.dependencies.auth import require_authenticated_user
+{% endif %}
 
 router = APIRouter(prefix="/api")
 
+{% if with_auth %}
+public_router = APIRouter(prefix="/v1")
+protected_router = APIRouter(
+    prefix="/v1",
+    dependencies=[Depends(require_authenticated_user)],
+)
+public_router.include_router(auth_router)
+protected_router.include_router(roles_router)
+protected_router.include_router(users_router)
+router.include_router(public_router)
+router.include_router(protected_router)
+{% else %}
 router.include_router(roles_router, prefix="/v1")
 router.include_router(users_router, prefix="/v1")
+{% endif %}

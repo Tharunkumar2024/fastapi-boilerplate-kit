@@ -4,8 +4,14 @@ This module provides main imports.
 
 from app.api.v1.roles import router as roles_router
 from app.api.v1.users import router as users_router
+{% if with_auth %}
+from app.api.v1.auth import router as auth_router
+{% endif %}
 
 __all__ = [
     "roles_router",
     "users_router",
+{% if with_auth %}
+    "auth_router",
+{% endif %}
 ]

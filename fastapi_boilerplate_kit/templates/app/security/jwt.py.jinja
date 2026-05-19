@@ -1,0 +1,86 @@
+"""
+This module provides JWT helpers.
+"""
+
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+from jose import jwt, JWTError
+from app.core import env_vars
+
+
+def create_token(
+    subject: str,
+    token_type: str,
+    purpose: str,
+    expires_in_minutes: int,
+    extra_claims: dict | None = None,
+) -> str:
+    now = datetime.now(timezone.utc)
+    expire_at = now + timedelta(minutes=expires_in_minutes)
+    payload = {
+        "sub": subject,
+        "token_type": token_type,
+        "purpose": purpose,
+        "iat": int(now.timestamp()),
+        "exp": expire_at,
+        "jti": str(uuid4()),
+    }
+    if extra_claims:
+        payload.update(extra_claims)
+    return jwt.encode(payload, env_vars.JWT_SECRET_KEY, algorithm=env_vars.JWT_ALGORITHM)
+
+
+def create_access_token(subject: str, extra_claims: dict | None = None) -> str:
+    return create_token(
+        subject=subject,
+        token_type="access",
+        purpose="auth",
+        expires_in_minutes=env_vars.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+        extra_claims=extra_claims,
+    )
+
+
+def create_refresh_token(subject: str) -> str:
+    return create_token(
+        subject=subject,
+        token_type="refresh",
+        purpose="auth",
+        expires_in_minutes=env_vars.JWT_REFRESH_TOKEN_EXPIRE_MINUTES,
+    )
+
+
+def create_reset_token(subject: str) -> str:
+    return create_token(
+        subject=subject,
+        token_type="reset",
+        purpose="password_reset",
+        expires_in_minutes=env_vars.JWT_RESET_TOKEN_EXPIRE_MINUTES,
+    )
+
+
+def create_invite_token(subject: str, extra_claims: dict | None = None) -> str:
+    return create_token(
+        subject=subject,
+        token_type="invite",
+        purpose="invite",
+        expires_in_minutes=env_vars.JWT_INVITE_TOKEN_EXPIRE_MINUTES,
+        extra_claims=extra_claims,
+    )
+
+
+def decode_access_token(token: str) -> dict:
+    try:
+        return jwt.decode(
+            token,
+            env_vars.JWT_SECRET_KEY,
+            algorithms=[env_vars.JWT_ALGORITHM],
+        )
+    except JWTError as exc:
+        raise ValueError("Invalid access token") from exc
+
+
+def ensure_token_claims(payload: dict, token_type: str, purpose: str) -> None:
+    if payload.get("token_type") != token_type:
+        raise ValueError(f"Invalid token type. Expected {token_type}")
+    if payload.get("purpose") != purpose:
+        raise ValueError(f"Invalid token purpose. Expected {purpose}")

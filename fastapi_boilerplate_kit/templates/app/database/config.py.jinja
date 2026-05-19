@@ -13,7 +13,11 @@ load_dotenv(".env")
 
 class Settings(BaseSettings):
     DATABASE_TYPE: str
-    {% include "partials/app/database/" + db_config + "_db_settings.jinja" %}
+    {% if db_config == "sqlite" %}
+    {% include "partials/app/database/sqlite_db_settings.jinja" %}
+    {% else %}
+    {% include "partials/app/database/server_db_settings.jinja" %}
+    {% endif %}
 
     model_config = SettingsConfigDict(
         env_file="../.env",

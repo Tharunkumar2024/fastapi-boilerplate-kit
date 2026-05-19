@@ -1,0 +1,19 @@
+"""
+This module provides auth token model.
+"""
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.sql import expression
+from app.models import BaseModel
+
+
+class AuthToken(BaseModel):
+    __tablename__ = "auth_tokens"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    token_hash = Column(String(255), nullable=False, unique=True)
+    token_type = Column(String(32), nullable=False)
+    purpose = Column(String(64), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True, server_default=expression.null())
+

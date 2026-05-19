@@ -1,0 +1,22 @@
+"""
+This module provides scoped query helpers.
+"""
+
+from pydantic import BaseModel, Field
+from app.models import User
+
+
+class ScopeContext(BaseModel):
+    user_id: int | None = Field(default=None)
+    role_name: str | None = Field(default=None)
+    is_superuser: bool = Field(default=False)
+
+
+def apply_user_scope(query, scope_context: ScopeContext):
+    if scope_context.is_superuser:
+        return query
+
+    if not scope_context.user_id:
+        return query.filter(User.id == -1)
+
+    return query.filter(User.id == scope_context.user_id)

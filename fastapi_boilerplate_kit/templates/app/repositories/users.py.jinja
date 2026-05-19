@@ -10,7 +10,12 @@ import itertools
 from typing import TypeVar, Type, Optional
 from sqlalchemy import and_
 from sqlalchemy.orm import Session, joinedload
+from fastapi_pagination import Params
+from fastapi_pagination.ext.sqlalchemy import paginate
 from app.models import User
+{% if with_auth %}
+from app.repositories.scopes import ScopeContext, apply_user_scope
+{% endif %}
 
 T = TypeVar("T")
 
@@ -35,8 +40,18 @@ class UsersRepository:
             .first()
         )
 
-    def get_all_users(self) -> list[User]:
-        return self.db.query(User).all()
+    def get_all_users(
+        self,
+        params: Params,
+{% if with_auth %}
+        scope_context: ScopeContext,
+{% endif %}
+    ):
+        query = self.db.query(User)
+{% if with_auth %}
+        query = apply_user_scope(query, scope_context)
+{% endif %}
+        return paginate(self.db, query, params)
 
     def update_user(self, user_id: int, user_data: dict) -> User:
         db_user = self.get_user(user_id)

@@ -1,0 +1,102 @@
+"""
+This module provides authentication controller.
+"""
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.database.database import get_db
+from app.dependencies.auth import get_scope_context
+from app.dependencies.authorization import require_any_role
+from app.repositories.scopes import ScopeContext
+from app.services import AuthService
+from app.schemas import (
+    RegisterRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    ChangePasswordRequest,
+    InviteRequest,
+    AuthTokensResponse,
+    AuthMessageResponse,
+)
+from app.schemas.commons import CommonResponse
+from app.core.constants import role_constants
+
+
+router = APIRouter(prefix="/auth")
+
+
+def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
+    return AuthService(db)
+
+
+@router.post("/register", tags=["Auth"], response_model=CommonResponse[AuthTokensResponse])
+async def register(
+    payload: RegisterRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> CommonResponse[AuthTokensResponse]:
+    return await auth_service.register(payload)
+
+
+@router.post("/login", tags=["Auth"], response_model=CommonResponse[AuthTokensResponse])
+async def login(
+    payload: LoginRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> CommonResponse[AuthTokensResponse]:
+    return await auth_service.login(payload)
+
+
+@router.post("/refresh", tags=["Auth"], response_model=CommonResponse[AuthTokensResponse])
+async def refresh(
+    payload: RefreshTokenRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> CommonResponse[AuthTokensResponse]:
+    return await auth_service.refresh(payload)
+
+
+@router.post(
+    "/forgot-password",
+    tags=["Auth"],
+    response_model=CommonResponse[AuthMessageResponse],
+)
+async def forgot_password(
+    payload: ForgotPasswordRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> CommonResponse[AuthMessageResponse]:
+    return await auth_service.forgot_password(payload)
+
+
+@router.post(
+    "/reset-password",
+    tags=["Auth"],
+    response_model=CommonResponse[AuthMessageResponse],
+)
+async def reset_password(
+    payload: ResetPasswordRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> CommonResponse[AuthMessageResponse]:
+    return await auth_service.reset_password(payload)
+
+
+@router.post(
+    "/change-password",
+    tags=["Auth"],
+    response_model=CommonResponse[AuthMessageResponse],
+)
+async def change_password(
+    payload: ChangePasswordRequest,
+    scope_context: ScopeContext = Depends(get_scope_context),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> CommonResponse[AuthMessageResponse]:
+    return await auth_service.change_password(scope_context, payload)
+
+
+@router.post("/invite", tags=["Auth"], response_model=CommonResponse[AuthMessageResponse])
+async def invite(
+    payload: InviteRequest,
+    _: ScopeContext = Depends(require_any_role([role_constants.SU])),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> CommonResponse[AuthMessageResponse]:
+    return await auth_service.invite(payload)
+
