@@ -220,46 +220,44 @@ dnd -V
 
 This will show the installed version of the `fastapi-boilerplate-kit`.
 
-## Known Notes
+<br>
+
+## Production notes
+
+<details>
+<summary><strong>Operational defaults & SuperAdmin bootstrap</strong></summary>
+
+<br>
+
+**General**
 
 - Current ORM support is `sqlalchemy`.
 - If auth is enabled, email is enabled automatically by design.
 
-### Initial SuperAdmin (generated apps)
+**Initial SuperAdmin (generated apps)**
 
 - Seeding creates **roles** (`SuperAdmin`, `User`) by default. The `User` role is the default for **self-service** `POST /auth/register` (least privilege). You may rename or delete the `User` role via the roles API; if it is missing, open registration returns **409** until you recreate a role named `User` (or use invite-only onboarding).
-- At most **one** user may hold the `SuperAdmin` role at a time (enforced on register-with-invite, invite, admin user create/update, and optional env bootstrap). The `SuperAdmin` **role** cannot be deleted via API; **SuperAdmin users** cannot be deleted via API (profile and password flows still apply). Offboarding or GDPR-style erasure may require a controlled DB or support process; document that for production.
-- Optional bootstrap (with `ENABLE_SEED=TRUE`, no SuperAdmin yet): set **`ADMIN_PASSWORD`** for a fixed first password, or leave it **empty** for a **mandatory** one-time generated password (see below). Stored value is always a hash; **`must_change_password`** applies until `POST /api/v1/auth/change-password`.
-- **`ADMIN_PASSWORD` empty:** a **one-time random password** is always generated on first successful seed, **printed to stdout** (sensitive; avoid production log aggregation), with **`must_change_password`**—empty never means “no password” / skipped bootstrap for that path. An explicit **`ADMIN_PASSWORD`** always wins over generation. **`POST /api/v1/users`** and related user admin routes require an existing SuperAdmin token; **`SuperAdmin` cannot be assigned via that API**—first admin comes from this seed path (or controlled DB), then `invite` and user APIs apply.
+- At most **one** user may hold the `SuperAdmin` role at a time (enforced on register-with-invite, invite, admin user create/update, and optional env bootstrap). The `SuperAdmin` **role** cannot be deleted via API; **SuperAdmin users** cannot be deleted via API (profile and password flows still apply). Offboarding or GDPR-style erasure may require a controlled DB or support process.
+- Optional bootstrap (`ENABLE_SEED=TRUE`, no SuperAdmin yet): set **`ADMIN_PASSWORD`** for a fixed first password, or leave it **empty** for a **mandatory** one-time generated password. Stored value is always a hash; **`must_change_password`** applies until `POST /api/v1/auth/change-password`.
+- **`ADMIN_PASSWORD` empty:** a one-time random password is generated on first successful seed and **printed to stdout** (treat logs as sensitive). An explicit **`ADMIN_PASSWORD`** always wins. **`POST /api/v1/users`** cannot assign `SuperAdmin`—first admin comes from seed or controlled DB access.
+
+</details>
+
+<br>
 
 ---
 
 <br>
 
 <p align="center">
-  <strong>Project</strong>
+  <strong>Project information</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/ORM-SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy">
-  <img src="https://img.shields.io/badge/CLI-dnd-00ADD8?style=flat-square&logo=fastapi&logoColor=white" alt="dnd CLI">
-  <img src="https://img.shields.io/badge/Stable-1.6.0-2EA44F?style=flat-square" alt="Stable 1.6.0">
-</p>
-
-<p align="center">
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CONTRIBUTING.md">
-    <img src="https://img.shields.io/badge/Contributing-Welcome-2EA44F?style=flat-square&logo=github&logoColor=white" alt="Contributing">
-  </a>
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/SECURITY.md">
-    <img src="https://img.shields.io/badge/Security-Policy-D73A4A?style=flat-square&logo=dependabot&logoColor=white" alt="Security policy">
-  </a>
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues">
-    <img src="https://img.shields.io/badge/Support-Issues-1D76DB?style=flat-square&logo=githubissues&logoColor=white" alt="GitHub issues">
-  </a>
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md">
-    <img src="https://img.shields.io/badge/Changelog-1.6.0-5C4EE5?style=flat-square&logo=semanticrelease&logoColor=white" alt="Changelog">
-  </a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/badge/distribution-PyPI-3775A9?style=flat-square&logo=pypi&logoColor=white" alt="PyPI distribution"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/stack-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://www.sqlalchemy.org/"><img src="https://img.shields.io/badge/ORM-SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy"></a>
 </p>
 
 <br>
@@ -293,23 +291,36 @@ python setup.py sdist bdist_wheel
 
 </details>
 
-<details>
-<summary><strong>Contributing &amp; security</strong></summary>
-
 <br>
 
-Contributions are welcome. Open an issue for larger changes, then submit a PR against **`develop`**.
+<p align="center">
+  <strong>Community</strong>
+</p>
 
-| Topic | Link |
-|-------|------|
-| Contributing guide | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Security policy | [SECURITY.md](SECURITY.md) |
-| Private vulnerability report | [tharunkumar.developers@gmail.com](mailto:tharunkumar.developers@gmail.com) |
-| GitHub Security Advisories | [Report privately](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/security/advisories/new) |
+<p align="center">
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CONTRIBUTING.md">
+    <img src="https://img.shields.io/badge/Contributing-Guidelines-2EA44F?style=flat-square&logo=github&logoColor=white" alt="Contributing guidelines">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/SECURITY.md">
+    <img src="https://img.shields.io/badge/Security-Policy-BC245B?style=flat-square&logo=dependabot&logoColor=white" alt="Security policy">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues">
+    <img src="https://img.shields.io/badge/Issues-Support-D73A4A?style=flat-square&logo=githubissues&logoColor=white" alt="GitHub issues">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md">
+    <img src="https://img.shields.io/badge/Changelog-v1.6.0-5C4EE5?style=flat-square&logo=semanticrelease&logoColor=white" alt="Changelog">
+  </a>
+</p>
 
-Do **not** post security issues in public GitHub issues.
-
-</details>
+<p align="center">
+  <sub>
+    Report vulnerabilities privately via
+    <a href="mailto:tharunkumar.developers@gmail.com">email</a>
+    or
+    <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/security/advisories/new">GitHub Security Advisories</a>
+    — do not use public issues for security reports.
+  </sub>
+</p>
 
 <br>
 
@@ -318,22 +329,16 @@ Do **not** post security issues in public GitHub issues.
 </p>
 
 <p align="center">
-  <a href="https://fastapi.tiangolo.com/">
-    <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
-  </a>
-  <a href="https://click.palletsprojects.com/">
-    <img src="https://img.shields.io/badge/Click-CLI-323330?style=flat-square&logo=gnubash&logoColor=white" alt="Click">
-  </a>
-  <a href="https://jinja.palletsprojects.com/">
-    <img src="https://img.shields.io/badge/Jinja2-B41717?style=flat-square&logo=jinja&logoColor=white" alt="Jinja2">
-  </a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://click.palletsprojects.com/"><img src="https://img.shields.io/badge/Click-CLI-000000?style=for-the-badge&logo=click&logoColor=white" alt="Click"></a>
+  <a href="https://jinja.palletsprojects.com/"><img src="https://img.shields.io/badge/Jinja2-Templates-B41717?style=for-the-badge&logo=jinja&logoColor=white" alt="Jinja2"></a>
 </p>
 
 <br>
 
 <p align="center">
   <a href="https://opensource.org/licenses/Apache-2.0">
-    <img src="https://img.shields.io/badge/License-Apache%202.0-4285F4?style=for-the-badge" alt="Apache 2.0">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-2F80ED?style=flat-square&logo=apache&logoColor=white" alt="Apache 2.0 License">
   </a>
 </p>
 
@@ -345,5 +350,5 @@ Do **not** post security issues in public GitHub issues.
 </p>
 
 <p align="center">
-  <sub>If this project helps you, consider starring the repository on GitHub.</sub>
+  <sub>© 2025–2026 Tharunkumar Saravanan · Apache License 2.0</sub>
 </p>
