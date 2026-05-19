@@ -15,11 +15,21 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit"><b>GitHub</b></a> ·
-  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><b>PyPI</b></a> ·
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/docs/cli.md"><b>CLI docs</b></a> ·
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md"><b>Changelog</b></a> ·
-  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues"><b>Issues</b></a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit">
+    <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub repository">
+  </a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/">
+    <img src="https://img.shields.io/badge/PyPI-Install-3775A9?style=flat-square&logo=pypi&logoColor=white" alt="PyPI package">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/docs/cli.md">
+    <img src="https://img.shields.io/badge/CLI-Documentation-007ACC?style=flat-square&logo=markdown&logoColor=white" alt="CLI documentation">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md">
+    <img src="https://img.shields.io/badge/Changelog-Release%20notes-5C4EE5?style=flat-square&logo=semanticrelease&logoColor=white" alt="Changelog">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues">
+    <img src="https://img.shields.io/badge/Issues-Get%20help-D73A4A?style=flat-square&logo=githubissues&logoColor=white" alt="GitHub issues">
+  </a>
 </p>
 
 ---
