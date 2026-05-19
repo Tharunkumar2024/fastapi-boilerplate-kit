@@ -1,0 +1,40 @@
+"""
+This module provides email service.
+"""
+
+from aiosmtplib import SMTP
+from email.message import EmailMessage
+from fastapi import HTTPException, status
+from app.core import env_vars
+from app.schemas import EmailMessageRequest, EmailMessageResponse
+
+
+class EmailService:
+    async def send_email(self, payload: EmailMessageRequest) -> EmailMessageResponse:
+        if not env_vars.is_email_enabled:
+            return EmailMessageResponse(delivered=False, detail="Email service is disabled")
+
+        message = EmailMessage()
+        message["From"] = env_vars.SMTP_SENDER
+        message["To"] = payload.recipient
+        message["Subject"] = payload.subject
+        message.set_content(payload.body)
+
+        smtp_client = SMTP(
+            hostname=env_vars.SMTP_HOST,
+            port=env_vars.SMTP_PORT,
+            use_tls=env_vars.is_smtp_tls_enabled,
+        )
+
+        try:
+            await smtp_client.connect()
+            await smtp_client.login(env_vars.SMTP_USERNAME, env_vars.SMTP_PASSWORD)
+            await smtp_client.send_message(message)
+            return EmailMessageResponse(delivered=True, detail="Email sent successfully")
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to send email: {exc}",
+            ) from exc
+        finally:
+            await smtp_client.quit()

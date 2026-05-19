@@ -1,0 +1,86 @@
+"""
+This module provides JWT auth middleware.
+"""
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from app.core import env_vars
+from app.dependencies.auth import extract_token_from_request
+from app.security.jwt import decode_access_token, ensure_token_claims
+
+
+class JWTAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if not env_vars.is_auth_enabled:
+            return await call_next(request)
+
+        public_paths = {
+            "/",
+            "/docs",
+            "/openapi.json",
+            "/redoc",
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/forgot-password",
+            "/api/v1/auth/reset-password",
+        }
+        if request.url.path in public_paths:
+            return await call_next(request)
+
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
+        token = await extract_token_from_request(request)
+        if not token:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "status": "error",
+                    "code": 401,
+                    "message": "Authorization token is required",
+                    "data": None,
+                    "meta": None,
+                },
+            )
+
+        try:
+            payload = decode_access_token(token)
+            ensure_token_claims(payload, token_type="access", purpose="auth")
+        except ValueError as exc:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "status": "error",
+                    "code": 401,
+                    "message": str(exc),
+                    "data": None,
+                    "meta": None,
+                },
+            )
+
+        if payload.get("must_change_password"):
+            path = request.url.path
+            method = request.method
+            allowed_force_change = (
+                path == "/api/v1/auth/change-password"
+                and method == "POST"
+            )
+            if not allowed_force_change:
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "status": "error",
+                        "code": 403,
+                        "message": (
+                            "Password change required before accessing "
+                            "this resource"
+                        ),
+                        "data": None,
+                        "meta": None,
+                    },
+                )
+
+        request.state.user = payload
+        return await call_next(request)

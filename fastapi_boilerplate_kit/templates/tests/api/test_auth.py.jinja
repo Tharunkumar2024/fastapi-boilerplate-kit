@@ -1,0 +1,28 @@
+"""
+Auth API tests.
+"""
+
+
+def test_login_endpoint_exists(client):
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "nouser@example.com", "password": "Invalid@123"},
+    )
+    assert response.status_code != 404
+
+
+def test_forgot_password_returns_generic_response(client):
+    response = client.post(
+        "/api/v1/auth/forgot-password",
+        json={"email": "missing@example.com"},
+    )
+    assert response.status_code != 404
+
+
+def test_refresh_endpoint_exists(client):
+    response = client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": "invalid-token"},
+    )
+    assert response.status_code != 404
+

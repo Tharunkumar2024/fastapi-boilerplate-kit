@@ -1,0 +1,63 @@
+"""
+This module provides authentication dependencies.
+"""
+
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from app.core import env_vars, role_constants
+from app.repositories.scopes import ScopeContext
+from app.security.jwt import decode_access_token, ensure_token_claims
+
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+async def get_current_token_payload(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> dict:
+    if not env_vars.is_auth_enabled:
+        return {}
+
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header is required",
+        )
+
+    try:
+        payload = decode_access_token(credentials.credentials)
+        ensure_token_claims(payload, token_type="access", purpose="auth")
+        return payload
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        ) from exc
+
+
+async def get_scope_context(payload: dict = Depends(get_current_token_payload)) -> ScopeContext:
+    if not env_vars.is_auth_enabled:
+        return ScopeContext(is_superuser=True)
+
+    role_name = payload.get("role")
+    return ScopeContext(
+        user_id=payload.get("user_id"),
+        role_name=role_name,
+        is_superuser=role_name == role_constants.SU,
+    )
+
+
+async def require_authenticated_user(
+    _: dict = Depends(get_current_token_payload),
+) -> None:
+    return None
+
+
+async def extract_token_from_request(request: Request) -> str | None:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return None
+
+    scheme, _, token = auth_header.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+    return token

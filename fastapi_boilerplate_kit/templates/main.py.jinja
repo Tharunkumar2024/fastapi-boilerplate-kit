@@ -9,15 +9,22 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import HTTPException
+from fastapi.openapi.utils import get_openapi
+from fastapi_pagination import add_pagination
 from app import models
 from app.api.router import router
 from app.database.database import get_session, engine
-from app.seeds import seed_roles, seed_users
+from app.seeds import seed_roles{% if with_auth %}, seed_initial_admin{% endif %}
 from app.core import env_vars, boolean_constants
 from utils.global_handlers.error_handler import (
+    handle_http_exception,
     handle_internal_server_error,
     handle_validation_error
 )
+{% if with_auth %}
+from app.middlewares.auth import JWTAuthMiddleware
+{% endif %}
 
 {% set formatted_project_name = project_name.split('_') | map('capitalize') | join(' ') %}
 
@@ -32,7 +39,9 @@ async def lifespan(app: FastAPI):
         print("Database schema created or already exists.")
         if env_vars.ENABLE_SEED == boolean_constants.TRUE:
             seed_roles(db)
-            seed_users(db)
+            {% if with_auth %}
+            seed_initial_admin(db)
+            {% endif %}
     except Exception as e:
         print(f"Error during schema creation: {e}")
     yield
@@ -45,7 +54,63 @@ app = FastAPI(
         version="1.0.0"
     )
 
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+    schemas = openapi_schema.setdefault(
+        "components", {}
+    ).setdefault("schemas", {})
+    schemas["StandardErrorResponse"] = {
+        "type": "object",
+        "properties": {
+            "status": {"type": "string", "example": "error"},
+            "code": {"type": "integer", "example": 422},
+            "message": {"type": "string", "example": "Validation Error"},
+            "data": {"type": "null", "example": None},
+            "meta": {
+                "type": "object",
+                "example": {
+                    "errors": [
+                        {"loc": ["body", "field"], "msg": "Invalid value"}
+                    ]
+                },
+            },
+        },
+        "required": ["status", "code", "message", "data", "meta"],
+    }
+
+    for path_item in openapi_schema.get("paths", {}).values():
+        for operation in path_item.values():
+            responses = operation.get("responses", {})
+            if "422" in responses:
+                responses["422"] = {
+                    "description": "Validation Error",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StandardErrorResponse"
+                            }
+                        }
+                    },
+                }
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
 app.include_router(router)
+add_pagination(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,6 +119,16 @@ app.add_middleware(
     allow_methods=env_vars.CORS_ALLOW_METHODS,
     allow_headers=env_vars.CORS_ALLOW_HEADERS,
 )
+{% if with_auth %}
+if env_vars.is_auth_enabled:
+    app.add_middleware(JWTAuthMiddleware)
+{% endif %}
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exception: HTTPException):
+    """Handle expected HTTP errors with standardized response envelope."""
+    return await handle_http_exception(request, exception)
 
 
 @app.exception_handler(Exception)

@@ -6,8 +6,13 @@ This module provides users service.
 
 from fastapi import status
 from fastapi.exceptions import HTTPException
+from fastapi_pagination import Page, Params
 from sqlalchemy.orm import Session
 from app.repositories import UsersRepository, RolesRepository
+{% if with_auth %}
+from app.repositories.scopes import ScopeContext
+from app.core import role_constants
+{% endif %}
 from app.schemas import (
     UserCreateRequest,
     UserUpdateRequest,
@@ -39,25 +44,50 @@ class UsersService:
     ) -> CommonResponse[UserResponse]:
         try:
             user_data = user.model_dump()
+{% if with_auth %}
+            role_id_val = user_data.get("role_id")
+            if role_id_val is not None:
+                target_role = self.role_repo.get_role(role_id_val)
+                if target_role and target_role.name == role_constants.SU:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=(
+                            "SuperAdmin cannot be created via users API; "
+                            "use seed bootstrap (ADMIN_PASSWORD or empty for one-time generated), "
+                            "then invite."
+                        ),
+                    )
+{% endif %}
             user = self.user_repo.create_user(user_data)
             return create_user_response(user)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def get_all_users(
-        self
-    ) -> CommonResponse[list[UserResponse]]:
+        self,
+        params: Params,
+{% if with_auth %}
+        scope_context: ScopeContext,
+{% endif %}
+    ) -> CommonResponse[Page[UserResponse]]:
         try:
-            users = self.user_repo.get_all_users()
-            if not users:
-                return user_not_found()
+            users = self.user_repo.get_all_users(
+                params=params,
+{% if with_auth %}
+                scope_context=scope_context,
+{% endif %}
+            )
             return get_all_user_response(users)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def get_user_entity(
         self,
@@ -68,10 +98,12 @@ class UsersService:
             if not user:
                 return user_not_found()
             return user
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def get_user_by_id(
         self,
@@ -82,10 +114,12 @@ class UsersService:
             if not user:
                 return user_not_found()
             return get_user_response(user)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def update_user_by_id(
         self,
@@ -93,12 +127,44 @@ class UsersService:
         user: UserUpdateRequest,
     ) -> CommonResponse[UserResponse]:
         try:
+{% if with_auth %}
+            existing_orm = self.user_repo.get_user(user_id)
+            if not existing_orm:
+                return user_not_found()
+{% endif %}
             user_data = {
                 k: v
                 for k, v in user.model_dump(exclude_unset=True).items()
                 if v is not None and v != ""
             }
-            existing_user_data = await self.get_user_entity(user_id)
+{% if with_auth %}
+            if (
+                "role_id" in user_data
+                and existing_orm.role
+                and existing_orm.role.name == role_constants.SU
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="SuperAdmin role_id cannot be changed via this API",
+                )
+            if "role_id" in user_data:
+                new_rid = user_data["role_id"]
+                new_role = self.role_repo.get_role(new_rid)
+                if new_role and new_role.name == role_constants.SU:
+                    su_count = self.role_repo.count_users_with_role_name(
+                        role_constants.SU
+                    )
+                    if su_count >= 1 and not (
+                        existing_orm.role
+                        and existing_orm.role.name == role_constants.SU
+                    ):
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail=(
+                                "A SuperAdmin already exists for this organization"
+                            ),
+                        )
+{% endif %}
             user_data.update(
                 {
                     "username": f"{user.firstname} {user.lastname}",
@@ -108,10 +174,12 @@ class UsersService:
             if not user:
                 return user_not_found()
             return update_user_response(user)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def update_user_status(
         self,
@@ -122,29 +190,45 @@ class UsersService:
             existing_user_data = self.user_repo.get_user(user_id)
             if not existing_user_data:
                 return user_not_found()
-            updated_user = self.user_repo.update_user_status(user_id, user_status_update.is_active)
+            updated_user = self.user_repo.update_user_status(
+                user_id, user_status_update.is_active
+            )
             if not updated_user:
                 return user_not_found()
             response_data = UserStatusUpdateResponse(
-            is_active=updated_user.is_active
+                is_active=updated_user.is_active
             )
             return update_user_status_response(response_data)
 
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def delete_user_by_id(
         self,
         user_id: int
     ) -> CommonResponse[UserResponse]:
         try:
+{% if with_auth %}
+            target = self.user_repo.get_user(user_id)
+            if not target:
+                return user_not_found()
+            if target.role and target.role.name == role_constants.SU:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="SuperAdmin users cannot be deleted via this API",
+                )
+{% endif %}
             user = self.user_repo.delete_user(user_id)
             if not user:
                 return user_not_found()
             return delete_user_response(user)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e

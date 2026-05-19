@@ -1,0 +1,373 @@
+"""
+This module provides auth service.
+"""
+
+from datetime import datetime, timezone
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from app.core import env_vars, role_constants
+from app.models import User
+from app.repositories import AuthRepository, RolesRepository, ScopeContext
+from app.security import (
+    create_access_token,
+    create_refresh_token,
+    create_reset_token,
+    create_invite_token,
+    decode_access_token,
+    ensure_token_claims,
+    hash_password,
+    verify_password,
+    hash_token,
+)
+from app.schemas import (
+    RegisterRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    ChangePasswordRequest,
+    InviteRequest,
+    AuthTokensResponse,
+    AuthMessageResponse,
+    EmailMessageRequest,
+)
+from app.schemas.commons import CommonResponse
+from app.services.email import EmailService
+
+
+class AuthService:
+    def __init__(self, db: Session):
+        self.db = db
+        self.auth_repo = AuthRepository(db)
+        self.role_repo = RolesRepository(db)
+        self.email_service = EmailService()
+
+    async def register(
+        self, payload: RegisterRequest
+    ) -> CommonResponse[AuthTokensResponse]:
+        normalized_email = payload.email.lower().strip()
+        existing_user = self.auth_repo.get_user_by_email(normalized_email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User already exists",
+            )
+
+        default_user_role = self.role_repo.get_role_by_name(role_constants.USER)
+        if not payload.invite_token:
+            if not default_user_role:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        "Self-service registration is disabled until a "
+                        f"'{role_constants.USER}' role exists"
+                    ),
+                )
+            role_id = default_user_role.id
+        else:
+            invite_claims = decode_access_token(payload.invite_token)
+            ensure_token_claims(invite_claims, token_type="invite", purpose="invite")
+            raw_rid = invite_claims.get("role_id")
+            if raw_rid is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invite token is missing role_id",
+                )
+            role_id = int(raw_rid)
+            invited_role = self.role_repo.get_role(role_id)
+            if not invited_role:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invite references an unknown role",
+                )
+            if invited_role.name == role_constants.SU:
+                if self.role_repo.count_users_with_role_name(role_constants.SU) >= 1:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="A SuperAdmin already exists for this organization",
+                    )
+
+            invite_token_hash = hash_token(payload.invite_token)
+            invite_token_entity = self.auth_repo.get_auth_token(
+                token_hash=invite_token_hash,
+                purpose="invite",
+            )
+            if not invite_token_entity:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid or used invite token",
+                )
+            if invite_token_entity.expires_at < datetime.now(timezone.utc):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invite token expired",
+                )
+            self.auth_repo.mark_auth_token_used(invite_token_entity)
+
+        user = self.auth_repo.create_user(
+            {
+                "role_id": role_id,
+                "username": f"{payload.firstname} {payload.lastname}",
+                "firstname": payload.firstname,
+                "lastname": payload.lastname,
+                "email": normalized_email,
+                "password_hash": hash_password(payload.password),
+                "is_active": True,
+                "is_email_verified": bool(payload.invite_token),
+                "must_change_password": False,
+            }
+        )
+        return CommonResponse[AuthTokensResponse].success(
+            code=201,
+            message="Successfully registered",
+            data=self._build_auth_tokens_response(
+                user.id,
+                user.role.name if user.role else None,
+                False,
+            ),
+        )
+
+    async def login(self, payload: LoginRequest) -> CommonResponse[AuthTokensResponse]:
+        normalized_email = payload.email.lower().strip()
+        user = self.auth_repo.get_user_by_email(normalized_email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is inactive",
+            )
+        if not user.password_hash:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+        if not verify_password(payload.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+        return CommonResponse[AuthTokensResponse].fetch(
+            self._build_auth_tokens_response(
+                user.id,
+                user.role.name if user.role else None,
+                bool(getattr(user, "must_change_password", False)),
+            )
+        )
+
+    async def refresh(
+        self,
+        payload: RefreshTokenRequest,
+    ) -> CommonResponse[AuthTokensResponse]:
+        claims = decode_access_token(payload.refresh_token)
+        ensure_token_claims(claims, token_type="refresh", purpose="auth")
+
+        user_id = claims.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token payload",
+            )
+
+        user = self.auth_repo.get_user_by_id(int(user_id))
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token subject",
+            )
+
+        return CommonResponse[AuthTokensResponse].fetch(
+            self._build_auth_tokens_response(
+                user.id,
+                user.role.name if user.role else None,
+                bool(getattr(user, "must_change_password", False)),
+            )
+        )
+
+    async def forgot_password(
+        self, payload: ForgotPasswordRequest
+    ) -> CommonResponse[AuthMessageResponse]:
+        normalized_email = payload.email.lower().strip()
+        user = self.auth_repo.get_user_by_email(normalized_email)
+        if user and user.is_active:
+            reset_token = create_reset_token(str(user.id))
+            reset_token_hash = hash_token(reset_token)
+            reset_claims = decode_access_token(reset_token)
+            expires_at = datetime.fromtimestamp(reset_claims["exp"], tz=timezone.utc)
+            self.auth_repo.create_auth_token(
+                {
+                    "user_id": user.id,
+                    "token_hash": reset_token_hash,
+                    "token_type": "reset",
+                    "purpose": "password_reset",
+                    "expires_at": expires_at,
+                    "created_by": user.id,
+                }
+            )
+            reset_url = (
+                f"{env_vars.FRONTEND_RESET_PASSWORD_URL}?token={reset_token}"
+            )
+            if env_vars.is_email_enabled:
+                await self.email_service.send_email(
+                    EmailMessageRequest(
+                        recipient=user.email,
+                        subject="Password reset",
+                        body=f"Use this link to reset your password: {reset_url}",
+                    )
+                )
+
+        return CommonResponse[AuthMessageResponse].success(
+            code=200,
+            message="If the email exists, a reset link has been sent",
+        )
+
+    async def reset_password(
+        self, payload: ResetPasswordRequest
+    ) -> CommonResponse[AuthMessageResponse]:
+        token_claims = decode_access_token(payload.token)
+        ensure_token_claims(token_claims, token_type="reset", purpose="password_reset")
+
+        token_hash = hash_token(payload.token)
+        token_entity = self.auth_repo.get_auth_token(
+            token_hash=token_hash,
+            purpose="password_reset",
+        )
+        if not token_entity:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or used reset token",
+            )
+        if token_entity.expires_at < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Reset token expired",
+            )
+
+        user = self.db.get(User, token_entity.user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        user.password_hash = hash_password(payload.new_password)
+        user.last_password_changed_at = datetime.now(timezone.utc)
+        self.auth_repo.update_user(user)
+        self.auth_repo.mark_auth_token_used(token_entity)
+
+        return CommonResponse[AuthMessageResponse].success(
+            code=200,
+            message="Password reset successful",
+        )
+
+    async def change_password(
+        self,
+        scope_context: ScopeContext,
+        payload: ChangePasswordRequest,
+    ) -> CommonResponse[AuthMessageResponse]:
+        if not scope_context.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access context",
+            )
+        user = self.db.get(User, scope_context.user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+        if not verify_password(payload.current_password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect",
+            )
+
+        user.password_hash = hash_password(payload.new_password)
+        user.last_password_changed_at = datetime.now(timezone.utc)
+        user.must_change_password = False
+        self.auth_repo.update_user(user)
+
+        return CommonResponse[AuthMessageResponse].success(
+            code=200,
+            message="Password changed successfully",
+        )
+
+    async def invite(self, payload: InviteRequest) -> CommonResponse[AuthMessageResponse]:
+        invitee_email = payload.email.lower().strip()
+        user = self.auth_repo.get_user_by_email(invitee_email)
+        if user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User already exists",
+            )
+
+        target_role = self.role_repo.get_role(payload.role_id)
+        if not target_role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unknown role_id",
+            )
+        if target_role.name == role_constants.SU:
+            if self.role_repo.count_users_with_role_name(role_constants.SU) >= 1:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="A SuperAdmin already exists for this organization",
+                )
+
+        invite_token = create_invite_token(
+            subject=invitee_email,
+            extra_claims={
+                "role_id": payload.role_id,
+                "role": target_role.name,
+            },
+        )
+        invite_token_hash = hash_token(invite_token)
+        invite_claims = decode_access_token(invite_token)
+        expires_at = datetime.fromtimestamp(invite_claims["exp"], tz=timezone.utc)
+        self.auth_repo.create_auth_token(
+            {
+                "user_id": None,
+                "token_hash": invite_token_hash,
+                "token_type": "invite",
+                "purpose": "invite",
+                "expires_at": expires_at,
+            }
+        )
+
+        invite_url = f"{env_vars.FRONTEND_REGISTER_URL}?invite_token={invite_token}"
+        if env_vars.is_email_enabled:
+            await self.email_service.send_email(
+                EmailMessageRequest(
+                    recipient=invitee_email,
+                    subject="You are invited",
+                    body=f"You are invited to join. Register using this link: {invite_url}",
+                )
+            )
+
+        return CommonResponse[AuthMessageResponse].success(
+            code=200,
+            message="Invite sent successfully",
+        )
+
+    def _build_auth_tokens_response(
+        self,
+        user_id: int,
+        role_name: str | None,
+        must_change_password: bool = False,
+    ) -> AuthTokensResponse:
+        extra_claims = {
+            "user_id": user_id,
+            "role": role_name,
+            "must_change_password": must_change_password,
+        }
+        return AuthTokensResponse(
+            access_token=create_access_token(str(user_id), extra_claims=extra_claims),
+            refresh_token=create_refresh_token(str(user_id)),
+            expires_in=env_vars.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            refresh_expires_in=env_vars.JWT_REFRESH_TOKEN_EXPIRE_MINUTES * 60,
+            must_change_password=must_change_password,
+        )
+

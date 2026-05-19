@@ -7,6 +7,7 @@ This module provides roles service.
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
+from app.core import role_constants
 from app.repositories import (
     RolesRepository,
 )
@@ -35,10 +36,12 @@ class RolesService:
             role_data = role.model_dump()
             response = self.role_repo.create_role(role_data)
             return create_role_response(response)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def get_all_roles(
         self
@@ -46,10 +49,12 @@ class RolesService:
         try:
             response = self.role_repo.get_all_roles()
             return get_all_role_response(response)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def get_role_by_id(
         self,
@@ -58,10 +63,12 @@ class RolesService:
         try:
             response = self.role_repo.get_role(role_id)
             return get_role_response(response)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def update_role_by_id(
         self,
@@ -79,19 +86,34 @@ class RolesService:
                 role_data
             )
             return update_role_response(response)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
 
     async def delete_role_by_id(
         self,
         role_id: int
     ) -> RoleResponse:
         try:
+            existing = self.role_repo.get_role(role_id)
+            if not existing:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Role not found",
+                )
+            if existing.name == role_constants.SU:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="The SuperAdmin system role cannot be deleted",
+                )
             response = self.role_repo.delete_role(role_id)
             return delete_role_response(response)
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e
-            )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e

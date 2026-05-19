@@ -1,0 +1,16 @@
+DATABASE_HOST: str
+    DATABASE_PORT: int
+    DATABASE_USER: str
+    DATABASE_PASSWORD: str
+    DATABASE_NAME: str
+
+    @property
+    def DATABASE_URL(self) -> str:
+        driver_suffix = "+pymysql" if self.DATABASE_TYPE == "mysql" else ""
+        url = (
+            f"{self.DATABASE_TYPE}{driver_suffix}://"
+            f"{self.DATABASE_USER}:{self.DATABASE_PASSWORD}@"
+            f"{self.DATABASE_HOST}:{self.DATABASE_PORT}/"
+            f"{self.DATABASE_NAME}"
+        )
+        return url

@@ -6,5 +6,8 @@ This module provides models imports.
 
 from app.database import Base, engine
 from .base_model import BaseModel
+{% if with_auth %}
+from .auth_tokens import AuthToken
+{% endif %}
 from .roles import Role
 from .users import User

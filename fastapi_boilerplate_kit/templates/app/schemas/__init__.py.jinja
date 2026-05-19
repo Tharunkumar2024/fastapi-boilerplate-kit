@@ -18,3 +18,22 @@ from .users import (
     UserResponse,
     UserStatusUpdateResponse,
 )
+{% if with_auth %}
+from .auth import (
+    RegisterRequest,
+    LoginRequest,
+    RefreshTokenRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+    ChangePasswordRequest,
+    InviteRequest,
+    AuthTokensResponse,
+    AuthMessageResponse,
+)
+{% endif %}
+{% if with_email or with_auth %}
+from .email import (
+    EmailMessageRequest,
+    EmailMessageResponse,
+)
+{% endif %}
