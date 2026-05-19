@@ -2,7 +2,7 @@
 The file have generation code for the boilerplate
 """
 
-# pylint: disable=C0116
+# pylint: disable=C0116,R0913,R0917
 
 import os
 from jinja2 import Environment, PackageLoader
