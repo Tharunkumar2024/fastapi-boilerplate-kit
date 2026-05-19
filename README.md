@@ -232,68 +232,118 @@ This will show the installed version of the `fastapi-boilerplate-kit`.
 - Optional bootstrap (with `ENABLE_SEED=TRUE`, no SuperAdmin yet): set **`ADMIN_PASSWORD`** for a fixed first password, or leave it **empty** for a **mandatory** one-time generated password (see below). Stored value is always a hash; **`must_change_password`** applies until `POST /api/v1/auth/change-password`.
 - **`ADMIN_PASSWORD` empty:** a **one-time random password** is always generated on first successful seed, **printed to stdout** (sensitive; avoid production log aggregation), with **`must_change_password`**—empty never means “no password” / skipped bootstrap for that path. An explicit **`ADMIN_PASSWORD`** always wins over generation. **`POST /api/v1/users`** and related user admin routes require an existing SuperAdmin token; **`SuperAdmin` cannot be assigned via that API**—first admin comes from this seed path (or controlled DB), then `invite` and user APIs apply.
 
-## Requirements
+---
 
-| Requirement | Version |
-|-------------|---------|
-| Python | 3.10+ |
-| Install | `pip install fastapi-boilerplate-kit` |
-| Generated stack | FastAPI, SQLAlchemy (see generated `requirements.txt`) |
+<br>
 
-## Development
+<p align="center">
+  <strong>Project</strong>
+</p>
 
-Install from source for local development or contribution:
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/ORM-SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy">
+  <img src="https://img.shields.io/badge/CLI-dnd-00ADD8?style=flat-square&logo=fastapi&logoColor=white" alt="dnd CLI">
+  <img src="https://img.shields.io/badge/Stable-1.6.0-2EA44F?style=flat-square" alt="Stable 1.6.0">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CONTRIBUTING.md">
+    <img src="https://img.shields.io/badge/Contributing-Welcome-2EA44F?style=flat-square&logo=github&logoColor=white" alt="Contributing">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/SECURITY.md">
+    <img src="https://img.shields.io/badge/Security-Policy-D73A4A?style=flat-square&logo=dependabot&logoColor=white" alt="Security policy">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues">
+    <img src="https://img.shields.io/badge/Support-Issues-1D76DB?style=flat-square&logo=githubissues&logoColor=white" alt="GitHub issues">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md">
+    <img src="https://img.shields.io/badge/Changelog-1.6.0-5C4EE5?style=flat-square&logo=semanticrelease&logoColor=white" alt="Changelog">
+  </a>
+</p>
+
+<br>
+
+<details>
+<summary><strong>Development setup</strong></summary>
+
+<br>
 
 ```bash
 git clone https://github.com/Tharunkumar2024/fastapi-boilerplate-kit.git
 cd fastapi-boilerplate-kit
 python -m venv .venv
+
 # Windows
 .venv\Scripts\activate
+
 # macOS / Linux
 source .venv/bin/activate
+
 pip install -e .
 dnd --version
 ```
 
-Build a distribution wheel locally:
+Build a wheel locally:
 
 ```bash
 pip install setuptools wheel
 python setup.py sdist bdist_wheel
 ```
 
-## Contributing
+</details>
 
-Contributions are welcome. Please open an issue to discuss larger changes, then submit a pull request against `develop`.
+<details>
+<summary><strong>Contributing &amp; security</strong></summary>
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for branch flow, setup, and release notes.
+<br>
 
-## Security
+Contributions are welcome. Open an issue for larger changes, then submit a PR against **`develop`**.
 
-Please **do not** report security vulnerabilities in public GitHub issues.
+| Topic | Link |
+|-------|------|
+| Contributing guide | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Security policy | [SECURITY.md](SECURITY.md) |
+| Private vulnerability report | [tharunkumar.developers@gmail.com](mailto:tharunkumar.developers@gmail.com) |
+| GitHub Security Advisories | [Report privately](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/security/advisories/new) |
 
-- Email: [tharunkumar.developers@gmail.com](mailto:tharunkumar.developers@gmail.com)
-- Or use [GitHub Security Advisories](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/security/advisories/new)
+Do **not** post security issues in public GitHub issues.
 
-See [SECURITY.md](SECURITY.md) for our disclosure policy.
+</details>
 
-## Support
-
-- [GitHub Issues](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues) — bugs and feature requests
-- [Changelog](CHANGELOG.md) — release history (current stable: **1.6.0**)
-- [CLI documentation](docs/cli.md) — `dnd generate` reference
-
-## Acknowledgments
-
-Built with [FastAPI](https://fastapi.tiangolo.com/), [Click](https://click.palletsprojects.com/), and [Jinja2](https://jinja.palletsprojects.com/).
-
-## License
-
-Apache License 2.0 — see [LICENSE](LICENSE).
-
----
+<br>
 
 <p align="center">
-  <sub>Maintained by <a href="https://github.com/Tharunkumar2024">Tharunkumar Saravanan</a> · Apache 2.0</sub>
+  <strong>Built with</strong>
+</p>
+
+<p align="center">
+  <a href="https://fastapi.tiangolo.com/">
+    <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
+  </a>
+  <a href="https://click.palletsprojects.com/">
+    <img src="https://img.shields.io/badge/Click-CLI-323330?style=flat-square&logo=gnubash&logoColor=white" alt="Click">
+  </a>
+  <a href="https://jinja.palletsprojects.com/">
+    <img src="https://img.shields.io/badge/Jinja2-B41717?style=flat-square&logo=jinja&logoColor=white" alt="Jinja2">
+  </a>
+</p>
+
+<br>
+
+<p align="center">
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-4285F4?style=for-the-badge" alt="Apache 2.0">
+  </a>
+</p>
+
+<p align="center">
+  <sub>
+    <strong>FastAPI Boilerplate Kit</strong> · maintained by
+    <a href="https://github.com/Tharunkumar2024"><strong>Tharunkumar Saravanan</strong></a>
+  </sub>
+</p>
+
+<p align="center">
+  <sub>If this project helps you, consider starring the repository on GitHub.</sub>
 </p>
