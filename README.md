@@ -232,14 +232,68 @@ This will show the installed version of the `fastapi-boilerplate-kit`.
 - Optional bootstrap (with `ENABLE_SEED=TRUE`, no SuperAdmin yet): set **`ADMIN_PASSWORD`** for a fixed first password, or leave it **empty** for a **mandatory** one-time generated password (see below). Stored value is always a hash; **`must_change_password`** applies until `POST /api/v1/auth/change-password`.
 - **`ADMIN_PASSWORD` empty:** a **one-time random password** is always generated on first successful seed, **printed to stdout** (sensitive; avoid production log aggregation), with **`must_change_password`**—empty never means “no password” / skipped bootstrap for that path. An explicit **`ADMIN_PASSWORD`** always wins over generation. **`POST /api/v1/users`** and related user admin routes require an existing SuperAdmin token; **`SuperAdmin` cannot be assigned via that API**—first admin comes from this seed path (or controlled DB), then `invite` and user APIs apply.
 
-## Release Notes
+## Requirements
 
-- Initial stable release: `1.5.8`
-- Current stable release: `1.6.0`
-- Full release history: see [`CHANGELOG.md`](CHANGELOG.md)
-- Advanced CLI usage: see [`docs/cli.md`](docs/cli.md)
+| Requirement | Version |
+|-------------|---------|
+| Python | 3.10+ |
+| Install | `pip install fastapi-boilerplate-kit` |
+| Generated stack | FastAPI, SQLAlchemy (see generated `requirements.txt`) |
 
-## License:
-This project is licensed under the Apache License - see the [LICENSE](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/LICENSE) file for details.
+## Development
 
-Enjoy building with FastAPI using **DND**, making it easier than ever! 🚀💻
+Install from source for local development or contribution:
+
+```bash
+git clone https://github.com/Tharunkumar2024/fastapi-boilerplate-kit.git
+cd fastapi-boilerplate-kit
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+pip install -e .
+dnd --version
+```
+
+Build a distribution wheel locally:
+
+```bash
+pip install setuptools wheel
+python setup.py sdist bdist_wheel
+```
+
+## Contributing
+
+Contributions are welcome. Please open an issue to discuss larger changes, then submit a pull request against `develop`.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch flow, setup, and release notes.
+
+## Security
+
+Please **do not** report security vulnerabilities in public GitHub issues.
+
+- Email: [tharunkumar.developers@gmail.com](mailto:tharunkumar.developers@gmail.com)
+- Or use [GitHub Security Advisories](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/security/advisories/new)
+
+See [SECURITY.md](SECURITY.md) for our disclosure policy.
+
+## Support
+
+- [GitHub Issues](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues) — bugs and feature requests
+- [Changelog](CHANGELOG.md) — release history (current stable: **1.6.0**)
+- [CLI documentation](docs/cli.md) — `dnd generate` reference
+
+## Acknowledgments
+
+Built with [FastAPI](https://fastapi.tiangolo.com/), [Click](https://click.palletsprojects.com/), and [Jinja2](https://jinja.palletsprojects.com/).
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
+
+---
+
+<p align="center">
+  <sub>Maintained by <a href="https://github.com/Tharunkumar2024">Tharunkumar Saravanan</a> · Apache 2.0</sub>
+</p>
