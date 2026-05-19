@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>CLI scaffolding for production-ready FastAPI applications</strong><br>
-  Auth, RBAC, JWT middleware, multi-database presets, and pytest — generated with one command.
+  Auth, RBAC, JWT middleware, multi-database presets, and pytest - generated with one command.
 </p>
 
 <p align="center">
@@ -34,7 +34,7 @@
 
 ---
 
-**FastAPI Boilerplate Kit** (`dnd`) is a PyPI package that generates opinionated, deployment-oriented FastAPI project layouts—routing, persistence, authentication, and tests—so you can focus on business logic instead of repetitive setup.
+**FastAPI Boilerplate Kit** (`dnd`) is a PyPI package that generates opinionated, deployment-oriented FastAPI project layouts-routing, persistence, authentication, and tests - so you can focus on business logic instead of repetitive setup.
 
 ```bash
 pip install fastapi-boilerplate-kit
