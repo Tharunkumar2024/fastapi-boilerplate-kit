@@ -325,6 +325,53 @@ python setup.py sdist bdist_wheel
 <br>
 
 <p align="center">
+  <strong>Support this project</strong>
+</p>
+
+<p align="center">
+  <sub>Optional contributions help fund maintenance, documentation, and releases.</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sponsors/Tharunkumar2024">
+    <img src="https://img.shields.io/badge/Sponsor-GitHub-EA4AAA?style=flat-square&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors">
+  </a>
+  <a href="mailto:tharunkumar.developers@gmail.com?subject=Donation%20-%20FastAPI%20Boilerplate%20Kit">
+    <img src="https://img.shields.io/badge/Donate-Contact%20by%20Email-00457C?style=flat-square&logo=paypal&logoColor=white" alt="Donate via email (PayPal details on request)">
+  </a>
+</p>
+
+<p align="center">
+  <sub>
+    Donations: email the maintainer for a secure PayPal link (no public payment URL in this repo).
+    GitHub Sponsors:
+    <code>github.com/sponsors/Tharunkumar2024</code>
+    · General:
+    <a href="mailto:tharunkumar.developers@gmail.com">tharunkumar.developers@gmail.com</a>
+  </sub>
+</p>
+
+<br>
+
+<p align="center">
+  <strong>Connect</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.linkedin.com/in/tharunkumar-s/">
+    <img src="https://img.shields.io/badge/Author-Tharunkumar%20Saravanan-0A66C2?style=flat-square&logo=linkedin&logoColor=white" alt="Author LinkedIn profile">
+  </a>
+  <a href="https://www.linkedin.com/company/trillionaire-tk/">
+    <img src="https://img.shields.io/badge/Company-Trillionaire%20TK-0A66C2?style=flat-square&logo=linkedin&logoColor=white" alt="Trillionaire TK on LinkedIn">
+  </a>
+  <a href="https://www.youtube.com/@trillionairetk">
+    <img src="https://img.shields.io/badge/YouTube-@trillionairetk-FF0000?style=flat-square&logo=youtube&logoColor=white" alt="YouTube channel">
+  </a>
+</p>
+
+<br>
+
+<p align="center">
   <strong>Built with</strong>
 </p>
 
@@ -346,6 +393,12 @@ python setup.py sdist bdist_wheel
   <sub>
     <strong>FastAPI Boilerplate Kit</strong> · maintained by
     <a href="https://github.com/Tharunkumar2024"><strong>Tharunkumar Saravanan</strong></a>
+    ·
+    <a href="https://www.linkedin.com/in/tharunkumar-s/">LinkedIn</a>
+    ·
+    <a href="https://www.linkedin.com/company/trillionaire-tk/">Trillionaire TK</a>
+    ·
+    <a href="https://www.youtube.com/@trillionairetk">YouTube</a>
   </sub>
 </p>
 
