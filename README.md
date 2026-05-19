@@ -3,10 +3,16 @@
 This is a FastAPI Boilerplate Kit to generate the basic configurations to start development and deployment-ready templates.
 
 ## Features:
-- **FastAPI Boilerplate**: A simple and clean project setup for creating FastAPI applications.
-- **Pre-configured Templates**: Includes templates for essential files such as `main.py`, `Dockerfile`, `requirements.txt`, and others.
-- **Command-Line Interface (CLI)**: Generate a new FastAPI project with a single command.
-- **Production-Ready Setup**: Provides a basic structure that is ready for deployment.
+- **FastAPI Boilerplate**: A clean project setup for building FastAPI applications quickly.
+- **Auth Module**: Register, login, refresh, forgot/reset password, change password, and invite flows.
+- **Auth Middleware + Authorization**: JWT middleware with dependency-based authorization guards.
+- **Scoped Access Querying**: Repository/service-level scope-aware filtering patterns.
+- **Email Integration**: Async email service templates for auth and integration use cases.
+- **Test Scaffold (PyTest)**: Baseline test structure with API/service test examples.
+- **Interactive Scaffolding**: Guided generation with `--interactive`.
+- **Config-Driven Scaffolding**: Deterministic generation with `--config-file`.
+- **Preset Modes**: `minimal`, `standard`, and `enterprise`.
+- **Database-Aware Generation**: Supports SQLite and server DB style setup (PostgreSQL/MySQL).
 
 ## Getting Started
 
@@ -24,13 +30,23 @@ pip install -i https://test.pypi.org/simple/ fastapi-boilerplate-kit
 ```
 
 ### Generate a New Project
-Once the installation is complete, you can generate a new FastAPI project using the CLI:
+Once the installation is complete, generate a project with:
 
-```
+```bash
 dnd generate PROJECT_NAME
 ```
 
-This will create a new project directory named `PROJECT_NAME` with the default structure for a FastAPI project.
+This creates `PROJECT_NAME` with recommended defaults (`sqlalchemy`, `sqlite`, auth/email/tests enabled).
+
+### What gets scaffolded
+
+- API routing with public/protected separation
+- Auth endpoints and auth token workflow
+- JWT + password security utilities
+- Middleware + dependency layers for auth/authorization
+- Repositories/services with scoped querying pattern
+- PyTest baseline and sample tests
+- Environment and DB configuration templates
 
 ### Project Setup
 1. **Change to the generated project directory**:
@@ -77,8 +93,78 @@ python main.py
 ## Command-Line Interface (CLI)
 The FastAPI Boilerplate Kit provides a CLI to simplify project generation.
 
-### Commands
-* `dnd generate PROJECT_NAME`: Generate a new FastAPI project with the specified `PROJECT_NAME`.
+### Core Command
+
+```bash
+dnd generate PROJECT_NAME [options]
+```
+
+### Common Workflows
+
+1. **Default generation (recommended defaults)**
+
+```bash
+dnd generate my_app
+```
+
+2. **Interactive guided setup**
+
+```bash
+dnd generate my_app --interactive
+```
+
+3. **Non-interactive with explicit DB settings**
+
+```bash
+dnd generate my_app --yes --database postgresql --database-host localhost --database-port 5432 --database-user app_user --database-password app_pass --database-name app_db
+```
+
+4. **Dry run (preview resolved config without writing files)**
+
+```bash
+dnd generate my_app --yes --database mysql --database-host localhost --database-port 3306 --database-user root --database-password root --database-name app_db --dry-run
+```
+
+### Using `--config-file`
+
+You can pass a JSON file to keep generation deterministic across environments and teams.
+
+Example file `scaffold.config.json`:
+
+```json
+{
+  "preset": "standard",
+  "database": "postgresql",
+  "orm": "sqlalchemy",
+  "with_auth": true,
+  "with_email": true,
+  "with_tests": true,
+  "database_host": "localhost",
+  "database_port": 5432,
+  "database_user": "app_user",
+  "database_password": "app_pass",
+  "database_name": "app_db"
+}
+```
+
+Generate from config:
+
+```bash
+dnd generate my_app --config-file scaffold.config.json --yes
+```
+
+### Key Options
+
+- `--interactive`: guided prompts for preset, DB, and features
+- `--yes`: accept defaults and skip prompts
+- `--dry-run`: print resolved config and skip file generation
+- `--preset {minimal|standard|enterprise}`: start from curated defaults
+- `--database {sqlite|postgresql|postgres|mysql}`
+- SQLite option: `--database-path`
+- Server DB options: `--database-host`, `--database-port`, `--database-user`, `--database-password`, `--database-name`
+- Feature toggles: `--with-auth/--without-auth`, `--with-email/--without-email`, `--with-tests/--without-tests`
+
+For advanced examples and CI usage, see [`docs/cli.md`](docs/cli.md).
 
 ### Version Information
 You can check the version of the FastAPI Boilerplate Kit using:
@@ -95,12 +181,24 @@ dnd -V
 
 This will show the installed version of the `fastapi-boilerplate-kit`.
 
-## Known Issues:
-* None at the moment (first release).
+## Known Notes
 
-## Future Improvements:
-* Add user authentication/authorization templates.
-* Docker integration for deploying FastAPI applications.
+- Current ORM support is `sqlalchemy`.
+- If auth is enabled, email is enabled automatically by design.
+
+### Initial SuperAdmin (generated apps)
+
+- Seeding creates **roles** (`SuperAdmin`, `User`) by default. The `User` role is the default for **self-service** `POST /auth/register` (least privilege). You may rename or delete the `User` role via the roles API; if it is missing, open registration returns **409** until you recreate a role named `User` (or use invite-only onboarding).
+- At most **one** user may hold the `SuperAdmin` role at a time (enforced on register-with-invite, invite, admin user create/update, and optional env bootstrap). The `SuperAdmin` **role** cannot be deleted via API; **SuperAdmin users** cannot be deleted via API (profile and password flows still apply). Offboarding or GDPR-style erasure may require a controlled DB or support process; document that for production.
+- Optional bootstrap (with `ENABLE_SEED=TRUE`, no SuperAdmin yet): set **`ADMIN_PASSWORD`** for a fixed first password, or leave it **empty** for a **mandatory** one-time generated password (see below). Stored value is always a hash; **`must_change_password`** applies until `POST /api/v1/auth/change-password`.
+- **`ADMIN_PASSWORD` empty:** a **one-time random password** is always generated on first successful seed, **printed to stdout** (sensitive; avoid production log aggregation), with **`must_change_password`**—empty never means “no password” / skipped bootstrap for that path. An explicit **`ADMIN_PASSWORD`** always wins over generation. **`POST /api/v1/users`** and related user admin routes require an existing SuperAdmin token; **`SuperAdmin` cannot be assigned via that API**—first admin comes from this seed path (or controlled DB), then `invite` and user APIs apply.
+
+## Release Notes
+
+- Initial stable release: `1.5.8`
+- Current stable release: `1.6.0`
+- Full release history: see [`CHANGELOG.md`](CHANGELOG.md)
+- Advanced CLI usage: see [`docs/cli.md`](docs/cli.md)
 
 ## License:
 This project is licensed under the Apache License - see the [LICENSE](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/LICENSE) file for details.

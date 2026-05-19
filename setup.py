@@ -9,14 +9,13 @@ with open('README.md', encoding='utf-8') as f:
 
 setup(
     name='fastapi_boilerplate_kit',
-    version='1.5.8',
+    version='1.6.0',
     packages=find_packages(),
     python_requires='>=3.10',
     package_data={
-        'fastapi_boilerplate_kit': ['templates/*.jinja'],
+        'fastapi_boilerplate_kit': ['templates/**/*.jinja'],
     },
     include_package_data=True,
-    py_modules=['cli'],
     install_requires=[
         'Click',
         'jinja2',
