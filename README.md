@@ -1,8 +1,37 @@
 # FastAPI Boilerplate Kit
 
-This is a FastAPI Boilerplate Kit to generate the basic configurations to start development and deployment-ready templates.
+<p align="center">
+  <strong>CLI scaffolding for production-ready FastAPI applications</strong><br>
+  Auth, RBAC, JWT middleware, multi-database presets, and pytest — generated with one command.
+</p>
 
-## Features:
+<p align="center">
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/v/fastapi-boilerplate-kit?label=PyPI&logo=python&logoColor=white" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/pyversions/fastapi-boilerplate-kit" alt="Python versions"></a>
+  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/pypi/l/fastapi-boilerplate-kit" alt="License"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/format/fastapi-boilerplate-kit" alt="Package format"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/dm/fastapi-boilerplate-kit" alt="PyPI downloads"></a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/actions/workflows/publish.yml"><img src="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/actions/workflows/publish.yml/badge.svg" alt="Publish to PyPI"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit"><b>GitHub</b></a> ·
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><b>PyPI</b></a> ·
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/docs/cli.md"><b>CLI docs</b></a> ·
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md"><b>Changelog</b></a> ·
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues"><b>Issues</b></a>
+</p>
+
+---
+
+**FastAPI Boilerplate Kit** (`dnd`) is a PyPI package that generates opinionated, deployment-oriented FastAPI project layouts—routing, persistence, authentication, and tests—so you can focus on business logic instead of repetitive setup.
+
+```bash
+pip install fastapi-boilerplate-kit
+dnd generate my_app --yes
+```
+
+## Features
 - **FastAPI Boilerplate**: A clean project setup for building FastAPI applications quickly.
 - **Auth Module**: Register, login, refresh, forgot/reset password, change password, and invite flows.
 - **Auth Middleware + Authorization**: JWT middleware with dependency-based authorization guards.
