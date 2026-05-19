@@ -1,8 +1,47 @@
 # FastAPI Boilerplate Kit
 
-This is a FastAPI Boilerplate Kit to generate the basic configurations to start development and deployment-ready templates.
+<p align="center">
+  <strong>CLI scaffolding for production-ready FastAPI applications</strong><br>
+  Auth, RBAC, JWT middleware, multi-database presets, and pytest - generated with one command.
+</p>
 
-## Features:
+<p align="center">
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/v/fastapi-boilerplate-kit?label=PyPI&logo=python&logoColor=white" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/pyversions/fastapi-boilerplate-kit" alt="Python versions"></a>
+  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/pypi/l/fastapi-boilerplate-kit" alt="License"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/format/fastapi-boilerplate-kit" alt="Package format"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/pypi/dm/fastapi-boilerplate-kit" alt="PyPI downloads"></a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/actions/workflows/publish.yml"><img src="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/actions/workflows/publish.yml/badge.svg" alt="Publish to PyPI"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit">
+    <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub repository">
+  </a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/">
+    <img src="https://img.shields.io/badge/PyPI-Install-3775A9?style=flat-square&logo=pypi&logoColor=white" alt="PyPI package">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/docs/cli.md">
+    <img src="https://img.shields.io/badge/CLI-Documentation-007ACC?style=flat-square&logo=markdown&logoColor=white" alt="CLI documentation">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md">
+    <img src="https://img.shields.io/badge/Changelog-Release%20notes-5C4EE5?style=flat-square&logo=semanticrelease&logoColor=white" alt="Changelog">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues">
+    <img src="https://img.shields.io/badge/Issues-Get%20help-D73A4A?style=flat-square&logo=githubissues&logoColor=white" alt="GitHub issues">
+  </a>
+</p>
+
+---
+
+**FastAPI Boilerplate Kit** (`dnd`) is a PyPI package that generates opinionated, deployment-oriented FastAPI project layouts-routing, persistence, authentication, and tests - so you can focus on business logic instead of repetitive setup.
+
+```bash
+pip install fastapi-boilerplate-kit
+dnd generate my_app --yes
+```
+
+## Features
 - **FastAPI Boilerplate**: A clean project setup for building FastAPI applications quickly.
 - **Auth Module**: Register, login, refresh, forgot/reset password, change password, and invite flows.
 - **Auth Middleware + Authorization**: JWT middleware with dependency-based authorization guards.
@@ -181,26 +220,188 @@ dnd -V
 
 This will show the installed version of the `fastapi-boilerplate-kit`.
 
-## Known Notes
+<br>
+
+## Production notes
+
+<details>
+<summary><strong>Operational defaults & SuperAdmin bootstrap</strong></summary>
+
+<br>
+
+**General**
 
 - Current ORM support is `sqlalchemy`.
 - If auth is enabled, email is enabled automatically by design.
 
-### Initial SuperAdmin (generated apps)
+**Initial SuperAdmin (generated apps)**
 
 - Seeding creates **roles** (`SuperAdmin`, `User`) by default. The `User` role is the default for **self-service** `POST /auth/register` (least privilege). You may rename or delete the `User` role via the roles API; if it is missing, open registration returns **409** until you recreate a role named `User` (or use invite-only onboarding).
-- At most **one** user may hold the `SuperAdmin` role at a time (enforced on register-with-invite, invite, admin user create/update, and optional env bootstrap). The `SuperAdmin` **role** cannot be deleted via API; **SuperAdmin users** cannot be deleted via API (profile and password flows still apply). Offboarding or GDPR-style erasure may require a controlled DB or support process; document that for production.
-- Optional bootstrap (with `ENABLE_SEED=TRUE`, no SuperAdmin yet): set **`ADMIN_PASSWORD`** for a fixed first password, or leave it **empty** for a **mandatory** one-time generated password (see below). Stored value is always a hash; **`must_change_password`** applies until `POST /api/v1/auth/change-password`.
-- **`ADMIN_PASSWORD` empty:** a **one-time random password** is always generated on first successful seed, **printed to stdout** (sensitive; avoid production log aggregation), with **`must_change_password`**—empty never means “no password” / skipped bootstrap for that path. An explicit **`ADMIN_PASSWORD`** always wins over generation. **`POST /api/v1/users`** and related user admin routes require an existing SuperAdmin token; **`SuperAdmin` cannot be assigned via that API**—first admin comes from this seed path (or controlled DB), then `invite` and user APIs apply.
+- At most **one** user may hold the `SuperAdmin` role at a time (enforced on register-with-invite, invite, admin user create/update, and optional env bootstrap). The `SuperAdmin` **role** cannot be deleted via API; **SuperAdmin users** cannot be deleted via API (profile and password flows still apply). Offboarding or GDPR-style erasure may require a controlled DB or support process.
+- Optional bootstrap (`ENABLE_SEED=TRUE`, no SuperAdmin yet): set **`ADMIN_PASSWORD`** for a fixed first password, or leave it **empty** for a **mandatory** one-time generated password. Stored value is always a hash; **`must_change_password`** applies until `POST /api/v1/auth/change-password`.
+- **`ADMIN_PASSWORD` empty:** a one-time random password is generated on first successful seed and **printed to stdout** (treat logs as sensitive). An explicit **`ADMIN_PASSWORD`** always wins. **`POST /api/v1/users`** cannot assign `SuperAdmin`—first admin comes from seed or controlled DB access.
 
-## Release Notes
+</details>
 
-- Initial stable release: `1.5.8`
-- Current stable release: `1.6.0`
-- Full release history: see [`CHANGELOG.md`](CHANGELOG.md)
-- Advanced CLI usage: see [`docs/cli.md`](docs/cli.md)
+<br>
 
-## License:
-This project is licensed under the Apache License - see the [LICENSE](https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/LICENSE) file for details.
+---
 
-Enjoy building with FastAPI using **DND**, making it easier than ever! 🚀💻
+<br>
+
+<p align="center">
+  <strong>Project information</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+"></a>
+  <a href="https://pypi.org/project/fastapi-boilerplate-kit/"><img src="https://img.shields.io/badge/distribution-PyPI-3775A9?style=flat-square&logo=pypi&logoColor=white" alt="PyPI distribution"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/stack-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://www.sqlalchemy.org/"><img src="https://img.shields.io/badge/ORM-SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy"></a>
+</p>
+
+<br>
+
+<details>
+<summary><strong>Development setup</strong></summary>
+
+<br>
+
+```bash
+git clone https://github.com/Tharunkumar2024/fastapi-boilerplate-kit.git
+cd fastapi-boilerplate-kit
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# macOS / Linux
+source .venv/bin/activate
+
+pip install -e .
+dnd --version
+```
+
+Build a wheel locally:
+
+```bash
+pip install setuptools wheel
+python setup.py sdist bdist_wheel
+```
+
+</details>
+
+<br>
+
+<p align="center">
+  <strong>Community</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CONTRIBUTING.md">
+    <img src="https://img.shields.io/badge/Contributing-Guidelines-2EA44F?style=flat-square&logo=github&logoColor=white" alt="Contributing guidelines">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/SECURITY.md">
+    <img src="https://img.shields.io/badge/Security-Policy-BC245B?style=flat-square&logo=dependabot&logoColor=white" alt="Security policy">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/issues">
+    <img src="https://img.shields.io/badge/Issues-Support-D73A4A?style=flat-square&logo=githubissues&logoColor=white" alt="GitHub issues">
+  </a>
+  <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/blob/main/CHANGELOG.md">
+    <img src="https://img.shields.io/badge/Changelog-v1.6.0-5C4EE5?style=flat-square&logo=semanticrelease&logoColor=white" alt="Changelog">
+  </a>
+</p>
+
+<p align="center">
+  <sub>
+    Report vulnerabilities privately via
+    <a href="mailto:tharunkumar.developers@gmail.com">email</a>
+    or
+    <a href="https://github.com/Tharunkumar2024/fastapi-boilerplate-kit/security/advisories/new">GitHub Security Advisories</a>
+    — do not use public issues for security reports.
+  </sub>
+</p>
+
+<br>
+
+<p align="center">
+  <strong>Support this project</strong>
+</p>
+
+<p align="center">
+  <sub>Optional contributions help fund maintenance, documentation, and releases.</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sponsors/Tharunkumar2024">
+    <img src="https://img.shields.io/badge/Sponsor-GitHub-EA4AAA?style=flat-square&logo=githubsponsors&logoColor=white" alt="GitHub Sponsors">
+  </a>
+  <a href="mailto:tharunkumar.developers@gmail.com?subject=Donation%20-%20FastAPI%20Boilerplate%20Kit">
+    <img src="https://img.shields.io/badge/Donate-Contact%20by%20Email-00457C?style=flat-square&logo=paypal&logoColor=white" alt="Donate via email (PayPal details on request)">
+  </a>
+</p>
+
+<p align="center">
+  <sub>
+    Donations: email the maintainer for a secure PayPal link (no public payment URL in this repo).
+    GitHub Sponsors:
+    <code>github.com/sponsors/Tharunkumar2024</code>
+    · General:
+    <a href="mailto:tharunkumar.developers@gmail.com">tharunkumar.developers@gmail.com</a>
+  </sub>
+</p>
+
+<br>
+
+<p align="center">
+  <strong>Connect</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.linkedin.com/in/tharunkumar-s/">
+    <img src="https://img.shields.io/badge/Author-Tharunkumar%20Saravanan-0A66C2?style=flat-square&logo=linkedin&logoColor=white" alt="Author LinkedIn profile">
+  </a>
+  <a href="https://www.linkedin.com/company/trillionaire-tk/">
+    <img src="https://img.shields.io/badge/Company-Trillionaire%20TK-0A66C2?style=flat-square&logo=linkedin&logoColor=white" alt="Trillionaire TK on LinkedIn">
+  </a>
+  <a href="https://www.youtube.com/@trillionairetk">
+    <img src="https://img.shields.io/badge/YouTube-@trillionairetk-FF0000?style=flat-square&logo=youtube&logoColor=white" alt="YouTube channel">
+  </a>
+</p>
+
+<br>
+
+<p align="center">
+  <strong>Built with</strong>
+</p>
+
+<p align="center">
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-Framework-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://click.palletsprojects.com/"><img src="https://img.shields.io/badge/Click-CLI-000000?style=for-the-badge&logo=click&logoColor=white" alt="Click"></a>
+  <a href="https://jinja.palletsprojects.com/"><img src="https://img.shields.io/badge/Jinja2-Templates-B41717?style=for-the-badge&logo=jinja&logoColor=white" alt="Jinja2"></a>
+</p>
+
+<br>
+
+<p align="center">
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-2F80ED?style=flat-square&logo=apache&logoColor=white" alt="Apache 2.0 License">
+  </a>
+</p>
+
+<p align="center">
+  <sub>
+    <strong>FastAPI Boilerplate Kit</strong> · maintained by
+    <a href="https://github.com/Tharunkumar2024"><strong>Tharunkumar Saravanan</strong></a>
+    ·
+    <a href="https://www.linkedin.com/in/tharunkumar-s/">LinkedIn</a>
+    ·
+    <a href="https://www.linkedin.com/company/trillionaire-tk/">Trillionaire TK</a>
+    ·
+    <a href="https://www.youtube.com/@trillionairetk">YouTube</a>
+  </sub>
+</p>
+
+<p align="center">
+  <sub>© 2025–2026 Tharunkumar Saravanan · Apache License 2.0</sub>
+</p>
