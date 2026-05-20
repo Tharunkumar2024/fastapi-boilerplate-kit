@@ -2,7 +2,7 @@
 The file have cli code for the boilerplate
 """
 
-# pylint: disable=C0116,E1120,E1123
+# pylint: disable=C0116,E1120,E1123,R0913,R0914,R0917
 
 import os
 import sys
